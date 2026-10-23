@@ -109,12 +109,13 @@ function BackpackMiniature({ itemId }: { itemId: string }) {
 }
 
 export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
-  starterChapterPrimary = false }: {
+  starterChapterPrimary = false, keeperNearby = false }: {
   projection: WizardViewProjection
   onIntent: (intent: WizardViewIntent) => void
   diagnostics?: boolean
   greenwayLogOrder?: ReactNode
   starterChapterPrimary?: boolean
+  keeperNearby?: boolean
 }) {
   const [ledgerOpen, setLedgerOpen] = useState(false)
   const markerQuest = projection.v36MarkerQuest?.active ? projection.v36MarkerQuest : null
@@ -1027,13 +1028,18 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
         <span><b>Claim River Works find</b>{bridgeheadClaim.reward === 'basic-pick'
           ? 'Basic mining pick, not auto-equipped. A field spade still digs soil.' : '35 coins.'}</span>
       </button>}
-      {!savePaused && !legacyActionsUnavailable && nearbyAction?.actionable && (
+      {!savePaused && keeperNearby && availableStore?.id === 'store-greenway' && <button
+        className="wr-prompt" data-actionable="true"
+        onClick={() => onIntent({ type: 'store.open', storeId: 'store-greenway' })}>
+        <kbd>E</kbd><span><b>Talk to Outfitters keeper</b>Ask about the work order or shop.</span>
+      </button>}
+      {!keeperNearby && !savePaused && !legacyActionsUnavailable && nearbyAction?.actionable && (
         <button className="wr-prompt" data-actionable="true" onClick={() => onIntent(projection.highlandExtraction
           ? { type: 'highland.extract', nodeId: projection.highlandExtraction.nodeId } : { type: 'interact' })}>
           <kbd>E</kbd><span><b>{nearbyAction.action}</b>{nearbyAction.label}</span>
         </button>
       )}
-      {nearbyAction && (savePaused || legacyActionsUnavailable || !nearbyAction.actionable) && (
+      {!keeperNearby && nearbyAction && (savePaused || legacyActionsUnavailable || !nearbyAction.actionable) && (
         <div className="wr-prompt" data-actionable="false" role="status">
           <span><b>{movementPaused ? 'Interaction paused for save' : mounted ? 'Dismount to interact' : legacyActionsUnavailable ? 'Interaction unavailable here' : nearbyAction.action}</b>{nearbyAction.label}</span>
         </div>
@@ -1103,7 +1109,13 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
           <b>Field camp: 4 logs + 1 stone</b>
           <p>{projection.fieldCamp.camps.length ? 'Field camp built. One camp per world.' : legacyActionsUnavailable ? 'Camp building is unavailable in this continuous preview.' : projection.fieldCamp.selectionEnabled ? 'Follow the frontier trail into inner Mireglass. Map marks suitable discovered camp ground.' : 'Explore Mireglass to choose a camp site.'}</p>
         </section>}
-        {availableStore && <button type="button" style={{ ...FIELD_ACTION_STYLE, width: '100%', marginBottom: 8 }} disabled={savePaused} aria-label={`Open ${availableStore.name}`} onClick={() => onIntent({ type: 'store.open', storeId: availableStore.id })}>Open {availableStore.name}</button>}
+        {availableStore && <button type="button" style={{ ...FIELD_ACTION_STYLE, width: '100%', marginBottom: 8 }} disabled={savePaused}
+          data-store-opener={availableStore.name}
+          aria-label={keeperNearby && availableStore.id === 'store-greenway'
+            ? 'Talk to Outfitters keeper and shop' : `Open ${availableStore.name}`}
+          onClick={() => onIntent({ type: 'store.open', storeId: availableStore.id })}>
+          {keeperNearby && availableStore.id === 'store-greenway'
+            ? 'Talk to Outfitters keeper / shop' : `Open ${availableStore.name}`}</button>}
         <section aria-label="Magic and skills" style={{ display: 'grid', gap: 5, marginBottom: 8 }}>
           {showGlow && <small className="wr-caption">Wayfinder Glow: {learnedGlow ? 'Learned' : 'Unknown'} · Excavation Lv{excavationLevel}</small>}
           {firstMagicLesson && <small className="wr-caption" role="note" aria-label="Wayfinder Glow lesson">{firstMagicLesson}</small>}
@@ -1313,7 +1325,10 @@ export function WizardHud({ projection, onIntent, diagnostics, greenwayLogOrder,
         </div>
         <div className="wr-touch-actions">
           <button className="wr-touch-action" disabled={savePaused} onClick={() => onIntent({ type: 'jump' })}>Jump</button>
-          <button className="wr-touch-action" disabled={savePaused || legacyActionsUnavailable || starterCliff && !nearbyAction?.actionable || !checkedNearbyInteract} onClick={() => onIntent({ type: 'interact' })}>Interact</button>
+          <button className="wr-touch-action" disabled={savePaused || legacyActionsUnavailable || !keeperNearby && (starterCliff && !nearbyAction?.actionable || !checkedNearbyInteract)}
+            onClick={() => onIntent(keeperNearby
+              ? { type: 'store.open', storeId: 'store-greenway' } : { type: 'interact' })}>
+            {keeperNearby ? 'Talk' : 'Interact'}</button>
           {v16Magic && nearbyInscriptions[0] && <button className="wr-touch-action" disabled={savePaused}
             aria-label={`Study ${nearbyInscriptions[0].name}`}
             onClick={() => onIntent({ type: 'inscription.study', inscriptionId: nearbyInscriptions[0].id })}>Study</button>}

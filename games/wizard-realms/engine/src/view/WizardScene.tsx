@@ -1177,7 +1177,7 @@ function AdultSedgehorn({ source, mount, pose }: {
   </group>
 }
 
-/** Scene-only chapter characters never intercept terrain picks or affect simulation. */
+/** Chapter characters are visual-only for simulation; the keeper accepts Talk picks. */
 function StarterOutfittersKeeper({ source, position }: { source: GLTF;
   position: [number, number, number] }) {
   const model = useMemo(() => {
@@ -1188,7 +1188,6 @@ function StarterOutfittersKeeper({ source, position }: { source: GLTF;
       if ((node as THREE.Mesh).isMesh !== true) return
       const mesh = node as THREE.Mesh
       mesh.castShadow = true
-      mesh.raycast = () => {}
       const recolor = (material: THREE.Material) => {
         if (!(material instanceof THREE.MeshStandardMaterial)
           || !['V9_violet_cloth', 'V9_violet_lining'].includes(material.name)) return material
@@ -2412,6 +2411,41 @@ export type SceneTerrainPicker = (clientX: number, clientY: number,
   kind?: V26TerrainPickKind) => V26PickedTerrainColumn | null
 export type SceneGroundPicker = (clientX: number, clientY: number) =>
   { x: number; y: number; z: number } | null
+export type SceneKeeperPicker = (clientX: number, clientY: number) => boolean
+const GREENWAY_KEEPER_OFFSET_Z = 1.5
+const GREENWAY_KEEPER_TALK_RANGE_M = 1.5
+
+/** The keeper's Talk radius stays inside the checked three-metre store/order radius. */
+export function greenwayKeeperNearby(projection: WizardViewProjection): boolean {
+  const store = projection.stores.find((candidate) => candidate.id === 'store-greenway')
+  return !!store && projection.nearbyStoreId === store.id
+    && Math.hypot(projection.player.position[0] - store.position[0],
+      projection.player.position[1] - store.position[1],
+      projection.player.position[2] - store.position[2] - GREENWAY_KEEPER_OFFSET_Z)
+      <= GREENWAY_KEEPER_TALK_RANGE_M
+}
+
+/** A front-most, visible keeper mesh is the only scene click that opens Talk. */
+export function pickVisibleKeeper(scene: THREE.Scene, camera: THREE.Camera,
+  bounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  clientX: number, clientY: number): boolean {
+  if (!(camera instanceof THREE.PerspectiveCamera || camera instanceof THREE.OrthographicCamera)
+    || ![bounds.left, bounds.top, bounds.width, bounds.height, clientX, clientY].every(Number.isFinite)
+    || bounds.width <= 0 || bounds.height <= 0
+    || clientX < bounds.left || clientX > bounds.left + bounds.width
+    || clientY < bounds.top || clientY > bounds.top + bounds.height) return false
+  const keeper = scene.getObjectByName('Greenway Outfitters keeper')
+  if (!keeper?.visible) return false
+  scene.updateMatrixWorld(true)
+  camera.updateMatrixWorld()
+  const ray = new THREE.Raycaster()
+  ray.setFromCamera(new THREE.Vector2((clientX - bounds.left) / bounds.width * 2 - 1,
+    1 - (clientY - bounds.top) / bounds.height * 2), camera)
+  const meshes: THREE.Mesh[] = []
+  scene.traverseVisible((object) => { if (object instanceof THREE.Mesh) meshes.push(object) })
+  const hit = ray.intersectObjects(meshes, false)[0]
+  return !!hit && !!keeper.getObjectById(hit.object.id)
+}
 
 export function treeMeshBlocksGroundPick(object: THREE.Object3D) {
   if (!(object instanceof THREE.Mesh)
@@ -2628,7 +2662,7 @@ function SaveFrameLoopResume({ saveInProgress, frameloop, inputTrace }: {
 }
 
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
-  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, onTerrainHoverFeedback, inputTrace,
+  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, onKeeperPickerReady, onTerrainHoverFeedback, inputTrace,
   saveInProgress = false, starterChapterActors = false }: {
   projection: WizardViewProjection
   cameraOrbit: RefObject<readonly [number, number]>
@@ -2637,6 +2671,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onAimPickerReady?: (picker: SceneWorkAimPicker) => void
   onTerrainPickerReady?: (picker: SceneTerrainPicker) => void
   onGroundPickerReady?: (picker: SceneGroundPicker) => void
+  onKeeperPickerReady?: (picker: SceneKeeperPicker) => void
   onTerrainHoverFeedback?: (feedback: string | null) => void
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
@@ -2703,8 +2738,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
     ? visual.stores.find((store) => store.id === 'store-greenway') : undefined
   const keeperPosition: [number, number, number] | null = keeperStore
     && revealedTerrain.some((cell) => Math.abs(cell.position[0] - keeperStore.position[0]) < cell.size[0] / 2
-      && Math.abs(cell.position[2] - (keeperStore.position[2] + 2.6)) < cell.size[1] / 2)
-    ? [keeperStore.position[0], keeperStore.position[1], keeperStore.position[2] + 2.6] : null
+      && Math.abs(cell.position[2] - (keeperStore.position[2] + GREENWAY_KEEPER_OFFSET_Z)) < cell.size[1] / 2)
+    ? [keeperStore.position[0], keeperStore.position[1], keeperStore.position[2] + GREENWAY_KEEPER_OFFSET_Z] : null
   // The far-bank tile at (20,24) is off every creek bridge lane. Its default-seed ore
   // protects the cell from soil placement while present; the visual has no collider.
   const wildCell = starterChapterActors && !publicV25RiverCellAtGrid(projection.seed, 5, 6)
@@ -2871,6 +2906,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         onTerrainPickerReady?.(terrainPicker)
         onGroundPickerReady?.((clientX, clientY) => pickVisibleGroundPoint(scene, camera,
           gl.domElement.getBoundingClientRect(), clientX, clientY, revealedTerrainRef.current))
+        onKeeperPickerReady?.((clientX, clientY) => pickVisibleKeeper(scene, camera,
+          gl.domElement.getBoundingClientRect(), clientX, clientY))
         if (projection.v26ValleyRimSegments !== undefined) {
           setHoverSurface({ canvas: gl.domElement, picker: terrainPicker })
         }

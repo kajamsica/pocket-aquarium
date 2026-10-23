@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import * as THREE from 'three'
 import { bindableActionCode, cameraOrbitFromDrag, CENTERED_CAMERA_ORBIT, DEFAULT_ACTION_KEYS, devDoubleTap, devNavigationEnabled, devSceneTapDecision, escapeSurfaceTarget, focusGameplayAfterClick, focusStoreOpener, keybindCaptureVisible, keyboardDigIntent, keyboardEventTime, keyboardMineIntent, keyboardMovementIntents, keyboardTerrainPointer, movementVector, nextToolIntent, parseActionKeys, pointerAimTap, pointerDevNavigateIntent, pointerMovedBeyondOrbitThreshold, pointerV26TerrainKind, pointerV26TerrainTapIntent, pointerV29TerrainTapIntent, pointerV31SoilPlaceTapIntent, pointerWorkAimIntent, pointerWorkAimKind, releaseHeldControls, savedWorkKeyboardIntent, shouldHandleGameplayKey, terrainModeAfterSpadeChange, V29_NO_GROUND_TARGET_HINT, WizardSurface } from './WizardSurface'
 import { WizardHud } from './WizardHud'
-import { cameraFramingFor } from './WizardScene'
+import { cameraFramingFor, WizardScene } from './WizardScene'
 import { pickV26TerrainColumn } from './V26TerrainPicker'
 import { RouteKey, WizardMap, mapCellForArrow, mapDialogTabTarget, mapHeadingRotation, mapSheetMode, mapToggleForKey, northUpGridOrder, overviewForDetails } from './WizardMap'
 import type { WizardTerrainCell, WizardViewProjection } from './contracts'
@@ -290,6 +290,15 @@ const renderHudTree = (props: Parameters<typeof WizardHud>[0]): ReactNode => {
     return null
   }
   renderToStaticMarkup(createElement(CaptureHud))
+  return tree
+}
+const renderSurfaceTree = (props: Parameters<typeof WizardSurface>[0]): ReactNode => {
+  let tree: ReactNode = null
+  function CaptureSurface() {
+    tree = WizardSurface(props)
+    return null
+  }
+  renderToStaticMarkup(createElement(CaptureSurface))
   return tree
 }
 
@@ -776,6 +785,46 @@ describe('third-person control grammar', () => {
     expect(other.focus).not.toHaveBeenCalled()
     focusStoreOpener(root, 'Absent store')
     expect(rootFocus).toHaveBeenCalledWith({ preventScroll: true })
+    const talkFocus = vi.fn()
+    const talkOpener = { dataset: { storeOpener: 'Greenway Outfitters' },
+      getAttribute: () => 'Talk to Outfitters keeper and shop', focus: talkFocus }
+    const talkRoot = { querySelectorAll: () => [talkOpener], focus: vi.fn() } as unknown as HTMLElement
+    focusStoreOpener(talkRoot, 'Greenway Outfitters')
+    expect(talkFocus).toHaveBeenCalledWith({ preventScroll: true })
+  })
+
+  it('routes a neutral tap on the nearby keeper through store.open, not terrain or dev navigation', () => {
+    const current: WizardViewProjection = { ...sellProjection, openStoreId: null,
+      nearbyStoreId: 'store-greenway', controllerActionsEnabled: true,
+      player: { ...sellProjection.player, position: [0, 0, 2.8] } }
+    const emitted: unknown[] = []
+    const tree = renderSurfaceTree({ projection: current, onIntent: (intent) => emitted.push(intent),
+      starterChapterActors: true, greenwayLogOrder: createElement('span', null, 'Carpenter order') })
+    const scene = findElements(tree, (element) => element.props.className === 'wr-scene')[0]
+    const canvas = findElements(tree, (element) => element.type === WizardScene)[0]
+    expect(scene).toBeDefined()
+    expect(canvas).toBeDefined()
+    ;(canvas.props.onKeeperPickerReady as (picker: () => boolean) => void)(() => true)
+    const currentTarget = { setPointerCapture: vi.fn(), hasPointerCapture: () => true,
+      releasePointerCapture: vi.fn() }
+    const event = { pointerId: 1, button: 0, isPrimary: true, clientX: 50, clientY: 50,
+      timeStamp: 1000, currentTarget }
+    ;(scene.props.onPointerDown as (event: unknown) => void)(event)
+    ;(scene.props.onPointerUp as (event: unknown) => void)(event)
+    expect(emitted).toEqual([{ type: 'store.open', storeId: 'store-greenway' }])
+    expect(currentTarget.releasePointerCapture).toHaveBeenCalledWith(1)
+
+    const farEmitted: unknown[] = []
+    const farTree = renderSurfaceTree({ projection: { ...current,
+      player: { ...current.player, position: [0, 0, -1] } },
+      onIntent: (intent) => farEmitted.push(intent), starterChapterActors: true,
+      greenwayLogOrder: createElement('span', null, 'Carpenter order') })
+    const farScene = findElements(farTree, (element) => element.props.className === 'wr-scene')[0]
+    const farCanvas = findElements(farTree, (element) => element.type === WizardScene)[0]
+    ;(farCanvas.props.onKeeperPickerReady as (picker: () => boolean) => void)(() => true)
+    ;(farScene.props.onPointerDown as (event: unknown) => void)(event)
+    ;(farScene.props.onPointerUp as (event: unknown) => void)(event)
+    expect(farEmitted).toEqual([])
   })
 
   it('offers collapsed novice work guidance in Greenway without changing the compact map', () => {

@@ -68,8 +68,8 @@ export function projectPublicV43StarterChapter(
     'Placing soil spends 1 terrain-bag soil. It gives no extra XP or coins.')
   if (!orderClaimed) return step('carpenter-order', 6,
     logs >= 4
-      ? 'Return across the creek with 4 surplus logs. At Greenway Outfitters, open the store panel and deliver the one-time carpenter order.'
-      : `Chop another nearby oak twice for 4 surplus logs (${logs}/4 carried), then return to Greenway Outfitters. Open the store panel and deliver the one-time carpenter order.`,
+      ? 'Return across the creek with 4 surplus logs. Talk to the Greenway Outfitters keeper and deliver the one-time carpenter order.'
+      : `Chop another nearby oak twice for 4 surplus logs (${logs}/4 carried), then return and talk to the Greenway Outfitters keeper to deliver the one-time carpenter order.`,
     'The carpenter order pays 10 coins and no character XP.')
   return { stage: 'complete', title,
     objective: 'The creek crossing, rewarded loam dig, raised far-bank step, and one-time carpenter order are recorded. Keep the step raised to keep this chapter complete.',
@@ -85,7 +85,7 @@ export function PublicV43StarterChapter({ head }: { head: PublicV43Progress }) {
     <p><strong>{chapter.progressLabel}</strong></p>
     <p>{chapter.objective}</p>
     <p><small>{chapter.reward}</small></p>
-    <p><small>Chapter instructions live in this journal. The Outfitters keeper is scenery for now; stand near the store and use its panel to buy supplies or deliver logs.</small></p>
+    <p><small>Chapter instructions live in this journal. Approach the Outfitters keeper and choose Talk to hear guidance, buy supplies, or deliver logs.</small></p>
     <p><small>Later: seek the north-cliff ladder, learn Wayfinder Glow, and follow the Sedgehorn trail.</small></p>
   </section>
 }

@@ -21,7 +21,7 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, presentationTurnRate, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, rightHandToolMountFor, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, Spade, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, Wand, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, greenwayKeeperNearby, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleKeeper, pickVisibleWorkAimX, presentationTurnRate, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, rightHandToolMountFor, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, Spade, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, Wand, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { advanceV9JumpPresentation, advanceV9TurnPhase, applyV9EquippedCarryPose,
   restoreV9EquippedCarryPose,
   authoritativeAvatarClipFor, V9_EQUIPPED_CARRY_STRENGTH, V9_RIGHT_HAND_CONTACT,
@@ -33,6 +33,41 @@ import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrai
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
   ({ head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null, ...overrides })
+
+describe('Greenway keeper Talk target', () => {
+  it('keeps the keeper radius inside the existing checked store radius', () => {
+    const base = { stores: [{ id: 'store-greenway', position: [0, 0, 0] }],
+      nearbyStoreId: 'store-greenway', player: { position: [0, 0, 2.8] } } as unknown as WizardViewProjection
+    expect(greenwayKeeperNearby(base)).toBe(true)
+    expect(greenwayKeeperNearby({ ...base, player: { ...base.player,
+      position: [0, 0, 3.01] } })).toBe(false)
+    expect(greenwayKeeperNearby({ ...base, player: { ...base.player,
+      position: [2, 0, 1.5] } })).toBe(false)
+    expect(greenwayKeeperNearby({ ...base, nearbyStoreId: null })).toBe(false)
+  })
+
+  it('picks only a front-most visible keeper, never a wall or empty space', () => {
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 20)
+    const keeper = new THREE.Group()
+    keeper.name = 'Greenway Outfitters keeper'
+    keeper.position.z = -2
+    keeper.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1)))
+    scene.add(keeper)
+    const bounds = { left: 0, top: 0, width: 100, height: 100 }
+    expect(pickVisibleKeeper(scene, camera, bounds, 50, 50)).toBe(true)
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.2))
+    wall.position.z = -1
+    scene.add(wall)
+    expect(pickVisibleKeeper(scene, camera, bounds, 50, 50)).toBe(false)
+    scene.remove(wall)
+    keeper.visible = false
+    expect(pickVisibleKeeper(scene, camera, bounds, 50, 50)).toBe(false)
+    keeper.visible = true
+    scene.remove(keeper)
+    expect(pickVisibleKeeper(scene, camera, bounds, 50, 50)).toBe(false)
+  })
+})
 
 describe('save-only scene frame loop', () => {
   it('runs normally outside a save and pauses active saves by default', () => {
