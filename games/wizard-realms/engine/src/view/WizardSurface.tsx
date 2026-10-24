@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { WizardViewIntent, WizardViewProjection } from './contracts'
 import { WizardHud } from './WizardHud'
 import { WizardMap, mapToggleForKey } from './WizardMap'
-import { WizardScene, sceneTerrainFor, sceneTerrainPickKind, v26TargetedTerrainCell, type SceneGroundPicker, type SceneTerrainPicker, type SceneWorkAimKind, type SceneWorkAimPicker } from './WizardScene'
+import { WizardScene, greenwayKeeperNearby, sceneTerrainFor, sceneTerrainPickKind, v26TargetedTerrainCell, type SceneGroundPicker, type SceneKeeperPicker, type SceneTerrainPicker, type SceneWorkAimKind, type SceneWorkAimPicker } from './WizardScene'
 import type { PublicV17InputTrace } from '../PublicV17InputScheduler'
 import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN } from '../domain/worldChunks'
 
@@ -119,7 +119,8 @@ export function escapeSurfaceTarget(mapOpen: boolean,
 
 export function focusStoreOpener(root: HTMLElement | null, storeName: string | null): void {
   const opener = root && storeName ? Array.from(root.querySelectorAll<HTMLButtonElement>('button[aria-label]'))
-    .find((button) => button.getAttribute('aria-label') === `Open ${storeName}`) : null
+    .find((button) => button.dataset?.storeOpener === storeName
+      || button.getAttribute('aria-label') === `Open ${storeName}`) : null
   ;(opener ?? root)?.focus({ preventScroll: true })
 }
 
@@ -361,6 +362,7 @@ const STYLES = `
 .wr-v26-terrain{position:absolute;z-index:6;right:16px;bottom:68px;box-sizing:border-box;width:220px;max-height:calc(100% - 170px);overflow-y:auto;padding:8px;border:1px solid #d5b86f88;border-radius:10px;background:#101a17e8;color:#f5f1df}.wr-v26-terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wr-v26-terrain button{min-height:44px;border:1px solid #d5b86f88;border-radius:7px;background:#374b3d;color:#fff;cursor:pointer;touch-action:manipulation}.wr-v26-terrain button[aria-pressed="true"]{background:#73561f}.wr-v26-terrain button:disabled{opacity:.48;cursor:not-allowed}.wr-v26-terrain p{margin:7px 1px 0;font-size:12px;color:#e0d5b6}.wr-v26-terrain .wr-soil-rejection{padding:6px 8px;border-left:3px solid #ffba75;background:#3b281c;color:#ffe3bd}.wr-surface[data-work-mode="true"] .wr-v26-terrain,.wr-surface:has(.wr-map-backdrop) .wr-v26-terrain,.wr-surface:has(.wr-context[data-store-panel]) .wr-v26-terrain{display:none}
 .wr-v26-terrain[data-v29="true"] .wr-v26-terrain-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .wr-terrain-inline-hint{display:none}
+.wr-surface[data-terrain-mode="place-soil"] .wr-v26-terrain .wr-terrain-inline-hint{display:block;color:#d3e7e7}
 .wr-terrain-hover-hint{position:absolute;left:50%;top:142px;transform:translateX(-50%);box-sizing:border-box;max-width:min(420px,calc(100% - 24px));padding:5px 9px;border-radius:7px;background:#102622e8;color:#d3e7e7;font-size:11px;text-align:center;pointer-events:none}
 @media(min-width:720px) and (max-width:1199px){.wr-terrain-hover-hint{left:280px;top:136px;width:calc(100% - 560px);max-width:none;transform:none;font-size:10px;line-height:1.2}}
 @media(min-width:1200px) and (min-height:600px){.wr-terrain-hover-hint{display:none}.wr-terrain-inline-hint{display:block;color:#d3e7e7!important}}
@@ -372,6 +374,7 @@ const STYLES = `
 @media(min-width:720px) and (max-width:900px) and (min-height:591px){[data-public-version=v42] .wr-gait small,[data-public-version=v43] .wr-gait small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}[data-public-version=v42] .wr-dev-nav-hint{display:none}}
 @media(min-width:901px) and (min-height:591px){[data-public-version=v42] .wr-dev-nav-hint{bottom:64px}}
 @media(max-width:719px){.wr-v26-terrain{right:8px;bottom:150px;width:180px}}
+@media(max-width:719px){[data-public-v23]:has(.wr-surface[data-terrain-mode="place-soil"]) .v43-familiar:not([open]),[data-public-v23]:has(.wr-surface[data-terrain-mode="place-soil"]) .v26-safety{display:none}}
 `
 
 export function WizardSurface({ projection, onIntent, diagnostics = false, inputTrace,
@@ -386,10 +389,15 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
   const aimPicker = useRef<SceneWorkAimPicker | null>(null)
   const terrainPicker = useRef<SceneTerrainPicker | null>(null)
   const groundPicker = useRef<SceneGroundPicker | null>(null)
+  const keeperPicker = useRef<SceneKeeperPicker | null>(null)
   const lastSceneTap = useRef<SceneTap | null>(null)
   const terrainPointer = useRef<readonly [number, number] | null>(null)
   const spadeEquipped = projection.equipment?.mainHand?.itemId === 'field_spade'
   const activePick = projection.v29Mining?.tools.activePick ?? null
+  const keeperNearby = starterChapterActors && !!greenwayLogOrder && !saveInProgress
+    && projection.controllerActionsEnabled !== false && !projection.unavailableActions
+    && projection.groundMount?.mode !== 'riding'
+    && greenwayKeeperNearby(projection)
   const groundActionLabel = activePick ? 'Mine' : 'Dig'
   const inOpenPit = !!projection.v29Mining && projection.v26OpenPitColumns?.some((column) =>
     column.openDepth > 0
@@ -571,7 +579,12 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         onIntent({ type: 'gait.toggle' })
         return
       }
-      if (event.code === 'KeyE' && !projection.unavailableActions) onIntent({ type: 'interact' })
+      if (event.code === 'KeyE' && !projection.unavailableActions) {
+        if (keeperNearby && !projection.openStoreId) {
+          event.preventDefault()
+          onIntent({ type: 'store.open', storeId: 'store-greenway' })
+        } else onIntent({ type: 'interact' })
+      }
       if (event.code === 'Space') {
         event.preventDefault()
         lastSceneTap.current = null
@@ -603,10 +616,10 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
       document.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('blur', clearControls)
     }
-  }, [actionKeys, activePick, bindingAction, devNavigation, groundActionLabel, inputTrace, mapOpen, onIntent, projection, spadeEquipped])
+  }, [actionKeys, activePick, bindingAction, devNavigation, groundActionLabel, inputTrace, keeperNearby, mapOpen, onIntent, projection, spadeEquipped])
 
   return (
-    <div className="wr-surface" ref={rootRef} tabIndex={0} aria-label="Wizard Realms third-person world" data-backpack-open={backpackOpen} data-work-mode={projection.savedTerrainWorks?.modeActive === true}
+    <div className="wr-surface" ref={rootRef} tabIndex={0} aria-label="Wizard Realms third-person world" data-backpack-open={backpackOpen} data-work-mode={projection.savedTerrainWorks?.modeActive === true} data-terrain-mode={terrainMode ?? undefined}
       onClickCapture={(event) => focusGameplayAfterClick(event.currentTarget, event.target as Element, event.detail)}>
       <style>{STYLES}</style>
       <div className="wr-scene" data-dragging={dragging}
@@ -651,6 +664,13 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           pointerPress.current = null
           lastDragPoint.current = null
           setDragging(false)
+          if (tap && keeperNearby && !mapOpen && !projection.openStoreId
+            && !projection.savedTerrainWorks?.modeActive && !projection.unavailableActions
+            && keeperPicker.current?.(event.clientX, event.clientY)) {
+            lastSceneTap.current = null
+            onIntent({ type: 'store.open', storeId: 'store-greenway' })
+            return
+          }
           if (doubleTap) {
             const intent = pointerDevNavigateIntent(devNavigation, projection, mapOpen,
               groundPicker.current?.(event.clientX, event.clientY) ?? null)
@@ -727,7 +747,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
           onTerrainHoverFeedback={setTerrainHoverFeedback}
           onAimPickerReady={(picker) => { aimPicker.current = picker }}
           onTerrainPickerReady={(picker) => { terrainPicker.current = picker }}
-          onGroundPickerReady={(picker) => { groundPicker.current = picker }} />
+          onGroundPickerReady={(picker) => { groundPicker.current = picker }}
+          onKeeperPickerReady={(picker) => { keeperPicker.current = picker }} />
       </div>
       {projection.v26ValleyRimSegments !== undefined && <div className="wr-v26-terrain"
         data-v29={projection.v29Mining ? 'true' : undefined}
@@ -745,6 +766,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
             disabled={!pointerV26TerrainKind(projection, mapOpen, 'dig') || projection.v31Soil.soilAvailable < 1}
             onClick={() => { setTerrainTapHint(null); setTerrainMode((current) => current === 'place-soil' ? null : 'place-soil') }}>Place soil</button>}
         </div>
+        {projection.v31Soil?.soilAvailable === 0 && terrainMode !== 'place-soil' && <p role="status">
+          No soil to place. Use Dig with a field spade on clear, revealed dry ground to collect soil.</p>}
         {soilPlaceRejection && <p className="wr-soil-rejection" role="alert">
           Soil placement was not saved: {soilPlaceRejection}</p>}
         <p role="status">{projection.v31Soil && terrainMode === 'place-soil'
@@ -764,7 +787,7 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
               : terrainMode === 'dig' ? 'Tap revealed dry ground to dig one layer.'
               : terrainMode === 'fill' ? 'Tap an open pit to fill one layer with earned soil.'
                 : 'Choose Dig or Fill, then tap clear ground. Drag to look around.')}</p>
-        {terrainMode === 'mine' && terrainHoverFeedback && <p className="wr-terrain-inline-hint" role="status">
+        {(terrainMode === 'mine' || terrainMode === 'place-soil') && terrainHoverFeedback && <p className="wr-terrain-inline-hint" role="status">
           {terrainHoverFeedback}</p>}
         {(spadeEquipped || activePick) && terrainMode && <p>{actionKeyLabel(actionKeys.dig)} aims at the mouse over the world. Move the mouse onto this panel to aim at +; turn or step to line up the ring. Click ground for an exact cell.</p>}
         <details className="wr-keybinds" ref={keybindDetailsRef}
@@ -782,7 +805,8 @@ export function WizardSurface({ projection, onIntent, diagnostics = false, input
         {inOpenPit && <p>Open pit view: step onto neighboring ground or orbit until its floor or inner wall outlines.</p>}
       </div>}
       <WizardHud projection={projection} onIntent={onIntent} diagnostics={diagnostics}
-        greenwayLogOrder={greenwayLogOrder} starterChapterPrimary={starterChapterPrimary} />
+        greenwayLogOrder={greenwayLogOrder} starterChapterPrimary={starterChapterPrimary}
+        keeperNearby={keeperNearby} />
       {devNavigation && !projection.openStoreId && <div className="wr-dev-nav-hint" role="status">{devNavHint
         ?? 'Dev: select a terrain tool to use it with one click. Turn tools off, then double-click clear revealed ground to follow a safe route.'}</div>}
       {!projection.openStoreId && <button className="wr-backpack-toggle" type="button" aria-controls="wizard-backpack" aria-expanded={backpackOpen} onClick={() => setBackpackOpen((open) => !open)}>Backpack</button>}

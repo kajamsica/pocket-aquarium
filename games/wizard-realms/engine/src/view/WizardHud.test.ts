@@ -43,6 +43,44 @@ const findElements = (node: ReactNode, matches: (element: ReactElement<Props>) =
   return matches(node) ? [node, ...nested] : nested
 }
 
+describe('Greenway keeper Talk controls', () => {
+  it('routes the visible prompt, store button, and touch Talk through the existing store action', () => {
+    const base = toViewProjection(createWizardWorld('greenway-alpha'), [])
+    const store = base.stores.find((entry) => entry.id === 'store-greenway')!
+    const view: WizardViewProjection = { ...base, nearbyStoreId: store.id,
+      openStoreId: null, controllerActionsEnabled: true,
+      player: { ...base.player, position: [store.position[0], store.position[1], store.position[2] + 2.8] } }
+    const emitted: unknown[] = []
+    const props = { projection: view, greenwayLogOrder: createElement('span', null, 'Carpenter order'),
+      keeperNearby: true, onIntent: (intent: unknown) => { emitted.push(intent) } }
+    const markup = renderToStaticMarkup(createElement(WizardHud, props))
+    expect(markup).toContain('aria-label="Talk to Outfitters keeper and shop"')
+    expect(markup).toContain('Talk to Outfitters keeper / shop')
+    const buttons = findElements(renderHudTree(props), (element) => element.type === 'button')
+    const prompt = buttons.find((button) => button.props.className === 'wr-prompt'
+      && renderToStaticMarkup(button).includes('Talk to Outfitters keeper'))!
+    const opener = buttons.find((button) => button.props['data-store-opener'] === store.name)!
+    const touch = buttons.find((button) => button.props.className === 'wr-touch-action'
+      && button.props.children === 'Talk')!
+    for (const button of [prompt, opener, touch]) {
+      expect(button.props.disabled).not.toBe(true)
+      ;(button.props.onClick as () => void)()
+    }
+    expect(emitted).toEqual(Array(3).fill({ type: 'store.open', storeId: store.id }))
+  })
+
+  it('uses honest Open wording outside keeper range', () => {
+    const base = toViewProjection(createWizardWorld('greenway-alpha'), [])
+    const view = { ...base, nearbyStoreId: 'store-greenway', openStoreId: null }
+    const markup = renderToStaticMarkup(createElement(WizardHud, { projection: view,
+      greenwayLogOrder: createElement('span', null, 'Carpenter order'),
+      keeperNearby: false, onIntent: vi.fn() }))
+    expect(markup).toContain('aria-label="Open Greenway Outfitters"')
+    expect(markup).toContain('>Open Greenway Outfitters</button>')
+    expect(markup).not.toContain('Talk to Outfitters keeper')
+  })
+})
+
 describe('starter cliff HUD capability gate', () => {
   it('puts selected Works readiness and cost before the aim controls', () => {
     const state = createWizardWorld('greenway-alpha')

@@ -1,4 +1,5 @@
 import type { PublicV31Progress } from './domain/publicWorldV31Migration'
+import { previewPublicV31SoilPlaces } from './domain/publicWorldV31Soil'
 import { projectPublicV31Pose } from './domain/publicWorldV31Support'
 import { WORLD_CELL_METERS } from './domain/worldChunks'
 import type { WizardTerrainCell, WizardViewProjection } from './view/contracts'
@@ -37,5 +38,6 @@ export function projectPublicV31WorldView(progress: PublicV31Progress,
       return height === undefined ? tile
         : { ...tile, elevationMeters: height, hasRaisedSoil: true }
     }) },
-    v31Soil: { raisedCells: raisedSoilCells, soilAvailable: progress.terrain.bag.soil } }
+    v31Soil: { raisedCells: raisedSoilCells, soilAvailable: progress.terrain.bag.soil,
+      placePreview: previewPublicV31SoilPlaces(progress) } }
 }

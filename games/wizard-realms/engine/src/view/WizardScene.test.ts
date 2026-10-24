@@ -21,11 +21,13 @@ import { WORLD_CELL_METERS, WORLD_GRID_MAX, WORLD_GRID_MIN, worldTileAtGrid } fr
 import { starterCliffCanonicalFace, starterCliffCanonicalSite } from '../domain/starterCliffProfile'
 import { publicV26ValleyRimSegments } from '../domain/publicWorldV26ValleyRim'
 import type { WizardLandmark, WizardResourceNode, WizardTerrainCell, WizardViewProjection } from './contracts'
-import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, presentationTurnRate, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, rightHandToolMountFor, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, Spade, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, Wand, WORLD_BEDROCK_BOUNDS } from './WizardScene'
+import { greenwayKeeperNearby, pickVisibleKeeper } from './WizardScene'
+import { Axe, avatarGearFor, cameraFramingFor, cameraOrbitDamping, constructionVisuals, digSiteAppearance, fieldCampVisuals, fogEndFor, fogVisibleDressingCells, highlandDetailFor, landscapeDressingEnabledForSearch, landmarkAppearance, MiningPick, mireglassConstructionGeometry, mireglassDetailFor, MIREGLASS_REED_GEOMETRY, pickVisibleWorkAimX, presentationTurnRate, PUBLIC_FOG_END_M, PUBLIC_FOG_START_M, ridgeSafeCameraPosition, rightHandToolMountFor, savedTerrainWorkMarkers, savedTerrainWorkVisuals, sceneFrameLoopForSave, sceneGraphicsOptionsForSearch, sceneGraphicsSearchForResolution, sceneProbeShadows, sceneResolutionForSearch, sceneShadowProbeEnabled, sceneSoilPlaceEmptyGuidance, sceneTerrainFor, sceneTerrainHoverFeedback, sceneTerrainPickKind, sceneTerrainTargetHint, Spade, starterCliffConstructionVisuals, starterCliffLadderGeometry, StarterCliffLadder, STORE_POST_GEOMETRY, StorePosts, storeSafeCameraPosition, storeStructureOccludesTarget, storeStructureOccludesView, terrainAppearanceFor, terrainCellVisualsEqual, terrainWorkApproachMarkers, terrainWorkCandidateMarkers, terrainWorkConstructionVisuals, terrainWorkStructureGeometry, TerrainWorkStructure, TreeMeshes, treeMeshBlocksGroundPick, treeOcclusionAppearance, treeTrunkBlocksView, UNCHARTED_GROUND_MATERIAL, v26TargetedTerrainCell, v42TrailTerrainFor, visibleV26PitLadders, Wand, WORLD_BEDROCK_BOUNDS } from './WizardScene'
 import { advanceV9JumpPresentation, advanceV9TurnPhase, applyV9EquippedCarryPose,
   restoreV9EquippedCarryPose,
   authoritativeAvatarClipFor, V9_EQUIPPED_CARRY_STRENGTH, V9_RIGHT_HAND_CONTACT,
   v9AnimationWeightsFor,
+  sceneMatchedSoilPlacePreview, sceneNearestSoilPlaceGuidance, SOIL_PLACE_VALID_MATERIAL,
   type V9JumpPresentation } from './WizardScene'
 import { buildV26ValleyRimGeometry } from './V26ValleyRimLayer'
 import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrain'
@@ -33,6 +35,41 @@ import { PUBLIC_VISUAL_RADIUS_CELLS, visibleTerrainCells } from './visibleTerrai
 const stack = (itemId: string) => ({ id: `inventory-${itemId}`, itemId, name: itemId, quantity: 1 })
 const equipment = (overrides: Partial<WizardViewProjection['equipment']> = {}): WizardViewProjection['equipment'] =>
   ({ head: null, chest: null, legs: null, feet: null, mainHand: null, offHand: null, ...overrides })
+
+describe('Greenway keeper Talk target', () => {
+  it('keeps the keeper radius inside the existing checked store radius', () => {
+    const base = { stores: [{ id: 'store-greenway', position: [0, 0, 0] }],
+      nearbyStoreId: 'store-greenway', player: { position: [0, 0, 2.8] } } as unknown as WizardViewProjection
+    expect(greenwayKeeperNearby(base)).toBe(true)
+    expect(greenwayKeeperNearby({ ...base, player: { ...base.player,
+      position: [0, 0, 3.01] } })).toBe(false)
+    expect(greenwayKeeperNearby({ ...base, player: { ...base.player,
+      position: [2, 0, 1.5] } })).toBe(false)
+    expect(greenwayKeeperNearby({ ...base, nearbyStoreId: null })).toBe(false)
+  })
+
+  it('picks only a front-most visible keeper, never a wall or empty space', () => {
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 20)
+    const keeper = new THREE.Group()
+    keeper.name = 'Greenway Outfitters keeper'
+    keeper.position.z = -2
+    keeper.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1)))
+    scene.add(keeper)
+    const bounds = { left: 0, top: 0, width: 100, height: 100 }
+    expect(pickVisibleKeeper(scene, camera, bounds, 50, 50)).toBe(true)
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.2))
+    wall.position.z = -1
+    scene.add(wall)
+    expect(pickVisibleKeeper(scene, camera, bounds, 50, 50)).toBe(false)
+    scene.remove(wall)
+    keeper.visible = false
+    expect(pickVisibleKeeper(scene, camera, bounds, 50, 50)).toBe(false)
+    keeper.visible = true
+    scene.remove(keeper)
+    expect(pickVisibleKeeper(scene, camera, bounds, 50, 50)).toBe(false)
+  })
+})
 
 describe('save-only scene frame loop', () => {
   it('runs normally outside a save and pauses active saves by default', () => {
@@ -189,6 +226,53 @@ describe('V42 selected-bridge scene trail', () => {
 })
 
 describe('V26 scene discovery gate', () => {
+  it('guides travel when checked Place soil preview has no eligible nearby cell', () => {
+    expect(sceneSoilPlaceEmptyGuidance(undefined)).toBeNull()
+    expect(sceneSoilPlaceEmptyGuidance(undefined, 0))
+      .toBe('No soil in your terrain bag. Use Terrain Dig with a field spade to collect soil before Place soil.')
+    expect(sceneSoilPlaceEmptyGuidance([{ rejection: null }], 0)).toContain('No soil in your terrain bag')
+    expect(sceneSoilPlaceEmptyGuidance([{ rejection: 'wet' }, { rejection: 'occupied' }]))
+      .toBe('No clear soil target nearby. Move farther to clear, dry ground, then try Place soil again.')
+    expect(sceneSoilPlaceEmptyGuidance([{ rejection: 'wet' }, { rejection: 'occupied' }], 1))
+      .toContain('No clear soil target nearby')
+    expect(sceneSoilPlaceEmptyGuidance([])).toContain('No clear soil target nearby')
+    expect(sceneSoilPlaceEmptyGuidance([{ rejection: 'wet' }, { rejection: null }], 1)).toBeNull()
+  })
+
+  it('points to the nearest checked-valid soil cell using world distance and direction', () => {
+    const player = [4.5, 0, 21.1] as const
+    expect(sceneNearestSoilPlaceGuidance(undefined, player)).toBeNull()
+    expect(sceneNearestSoilPlaceGuidance([
+      { gx: 1, gz: 5, rejection: 'occupied' }, { gx: 1, gz: 6, rejection: 'wet' }], player)).toBeNull()
+    expect(sceneNearestSoilPlaceGuidance([
+      { gx: 2, gz: 6, rejection: null }, { gx: 2, gz: 5, rejection: null }], player))
+      .toContain('about 4 m east (x 8, z 20)')
+    expect(sceneNearestSoilPlaceGuidance([{ gx: 2, gz: 5, rejection: null }], [8, 0, 24]))
+      .toContain('4 m north')
+  })
+
+  it('promises a checked-valid outline only for a matched revealed cell', () => {
+    const ground: WizardTerrainCell = { id: 'tile-5-8', position: [8, 1, 20], size: [4, 4],
+      height: 1, climate: 'temperate_forest' }
+    const blocked = { ...ground, id: 'tile-4-8', position: [4, 1, 20] as const }
+    const preview = [{ gx: 2, gz: 5, rejection: null },
+      { gx: 1, gz: 5, rejection: 'occupied' }] as const
+    const seam = sceneMatchedSoilPlacePreview(preview, [blocked])
+    expect(seam).toEqual([{ cell: blocked, gx: 1, gz: 5, rejection: 'occupied' }])
+    expect(sceneNearestSoilPlaceGuidance(seam, [4.5, 0, 21.1])).toBeNull()
+    expect(sceneSoilPlaceEmptyGuidance(seam)).toContain('No clear soil target nearby')
+    const visible = sceneMatchedSoilPlacePreview(preview, [blocked, ground])
+    expect(sceneSoilPlaceEmptyGuidance(visible)).toBeNull()
+    expect(sceneNearestSoilPlaceGuidance(visible, [4.5, 0, 21.1]))
+      .toContain('about 4 m east (x 8, z 20)')
+  })
+
+  it('keeps checked-valid soil outlines bright over terrain and hidden behind foreground', () => {
+    expect(SOIL_PLACE_VALID_MATERIAL.color.getHexString()).toBe('dfff38')
+    expect(SOIL_PLACE_VALID_MATERIAL).toMatchObject({ transparent: true, opacity: 1,
+      depthWrite: false, depthTest: true, toneMapped: false })
+  })
+
   it('opts only the V29 view into saved-pit targeting for Dig, Mine, and hover', () => {
     const historical = {} as WizardViewProjection
     const v29 = { v29Mining: {} } as WizardViewProjection
