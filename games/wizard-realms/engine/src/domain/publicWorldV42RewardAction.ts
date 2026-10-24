@@ -395,8 +395,15 @@ function flightFrames(before: PublicV42RewardProgress,
     ? current : decodePublicV42RewardProgress(current)
 }
 
+const REUSE_AIRBORNE_FALLBACK = 1 as const
 function replayFrames(before: PublicV42RewardProgress, rawWitness: unknown,
-  allowAirborne: boolean): PublicV42RewardProgress | null {
+  allowAirborne: boolean): PublicV42RewardProgress | null
+function replayFrames(before: PublicV42RewardProgress, rawWitness: unknown,
+  allowAirborne: boolean, reuseFlightOnFailure: true):
+  PublicV42RewardProgress | typeof REUSE_AIRBORNE_FALLBACK | null
+function replayFrames(before: PublicV42RewardProgress, rawWitness: unknown,
+  allowAirborne: boolean, reuseFlightOnFailure = false):
+  PublicV42RewardProgress | typeof REUSE_AIRBORNE_FALLBACK | null {
   const witness = decodePublicV14FrameWitness(rawWitness)
   let current = progressOf(before)
   if (!witness || !current) return null
@@ -409,6 +416,11 @@ function replayFrames(before: PublicV42RewardProgress, rawWitness: unknown,
   if (!current.ironHall.engaged && !current.ironHallReward.spar.active) {
     const moved = replayPublicV40Witness(current, witness)
     if (moved) return decodePublicV42RewardProgress({ ...current, ...moved })
+    if (reuseFlightOnFailure && !allowAirborne && witness.frames.length > 1) {
+      const flight = flightFrames(current, witness.frames, true)
+      if (flight && flight.state.player.verticalVelocity !== 0)
+        return REUSE_AIRBORNE_FALLBACK
+    }
   }
   const origin = current
   for (const frame of witness.frames) {
@@ -423,7 +435,10 @@ function replayFrames(before: PublicV42RewardProgress, rawWitness: unknown,
       if (!provisional || !pose || provisional.state.player.verticalVelocity === 0
         && Math.abs(pose.effective.position.y - pose.effective.floorY) <= 1e-6)
         return null
-      return flightFrames(origin, witness.frames, allowAirborne)
+      const flight = flightFrames(origin, witness.frames, allowAirborne)
+      return flight ?? (reuseFlightOnFailure && !allowAirborne
+        && !origin.ironHall.engaged && !origin.ironHallReward.spar.active
+        ? REUSE_AIRBORNE_FALLBACK : null)
     }
     current = resolveSparStrike({ ...moved, ironHallReward: current.ironHallReward })
     if (!current) return null
@@ -462,6 +477,9 @@ export function previewPublicV42RewardFrameBatch(before: PublicV42RewardProgress
       }
     }
   }
-  return replayPublicV42RewardFrameBatch(before, rawWitness)
-    ?? replayFrames(before, rawWitness, true)
+  const strict = replayFrames(before, rawWitness, false, true)
+  if (strict && strict !== REUSE_AIRBORNE_FALLBACK) return strict
+  const origin = strict === REUSE_AIRBORNE_FALLBACK && witness ? progressOf(before) : null
+  return strict === REUSE_AIRBORNE_FALLBACK && witness && origin
+    ? flightFrames(origin, witness.frames, true) : replayFrames(before, rawWitness, true)
 }

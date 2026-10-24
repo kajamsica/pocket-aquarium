@@ -439,6 +439,38 @@ describe('V42 Iron Hall reward authority', () => {
     expect(landed.ironHallReward).toEqual(before.ironHallReward)
   })
 
+  it('keeps W-direction step-down previews airborne until the checked landing', () => {
+    const base = claimed(), point = { x: -31.05194, z: -6.02097 }
+    const floor = resolvePublicV23Surface(base.state, point,
+      base.regionalWorks.builtLadderIds)!.floorY
+    const before = { ...base, state: {
+      ...base.state, discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(base.state.discoveryMask),
+        worldTileAtGrid(base.state.seed, -8, -2).id,
+        worldTileAtGrid(base.state.seed, -8, -1).id])].sort()),
+      player: { ...base.state.player, position: { ...point, y: floor } } } }
+    expect(decodePublicV42RewardProgress(before)).not.toBeNull()
+    const nudge = { intents: [{ type: 'move' as const,
+      delta: { x: 0, z: 0.0001 } }], walkRequested: true }
+    const descent = { intents: [{ type: 'move' as const,
+      delta: { x: 0, z: 0.16 } }], walkRequested: true }
+    const witness = (count: number) => ({ kind: 'frame-batch/v1' as const,
+      frames: [...Array.from({ length: 31 }, () => nudge), descent,
+        ...Array.from({ length: count - 32 }, () => idle)] })
+    for (const count of [33, 34, 35]) {
+      const input = witness(count)
+      const inherited = previewPublicV37FrameBatch(before, input)!
+      expect(inherited.state.player.verticalVelocity).not.toBe(0)
+      expect(replayPublicV42RewardFrameBatch(before, input)).toBeNull()
+      expect(replayPublicV42Witness(before, input)).toBeNull()
+      expect(previewPublicV42RewardFrameBatch(before, input))
+        .toEqual({ ...decodePublicV42RewardProgress(before)!, ...inherited })
+    }
+    const landed = witness(36), checked = replayPublicV42Witness(before, landed)
+    expect(checked).not.toBeNull()
+    expect(previewPublicV42RewardFrameBatch(before, landed)).toEqual(checked)
+  }, 30_000)
+
   it('repairs only nearby for 18 coins, without debiting refused actions', () => {
     const owned = claimed(), worn = { ...owned, ironHallReward: {
       ...owned.ironHallReward, vestDurability: 11 } }
