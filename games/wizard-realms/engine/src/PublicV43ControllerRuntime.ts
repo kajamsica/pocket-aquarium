@@ -6,7 +6,7 @@ import { INITIAL_IRON_HALL_REWARD, PUBLIC_V42_PROGRESS_KEYS,
 import type { PublicV42RewardProgress } from './domain/publicWorldV42RewardAction'
 import { decodePublicV42Witness, PUBLIC_V42_SCHEMA } from './domain/publicWorldV42Snapshot'
 import type { PublicV43Operation, PublicV43Start } from './domain/publicWorldV43Flow'
-import { decodePublicV43CheckedSuccessor, replayPublicV43Witness } from './domain/publicWorldV43Snapshot'
+import { decodePublicV43CheckedSuccessor } from './domain/publicWorldV43Snapshot'
 import type { PublicV43Witness } from './domain/publicWorldV43Snapshot'
 import { confirmPublicV43FamiliarAction, decodePublicV43FamiliarWitness,
   PUBLIC_V43_PROGRESS_KEYS } from './domain/publicWorldV43FamiliarAction'
@@ -58,11 +58,10 @@ export function createPublicV43ControllerRuntime(initial: PublicV43Start,
     if (!witness || requested &&
       !samePublicV14Value(reply.value.head.witness, requested))
       return { ok: false as const, reason: 'writer-mismatch' }
-    const expected = replayPublicV43Witness(before.head, witness)
     const next = decodePublicV43CheckedSuccessor(
       { ...before, previous: null }, { lineage: reply.value.lineage,
         previous: before.head, head: reply.value.head })
-    if (!expected || !next)
+    if (!next)
       return { ok: false as const, reason: 'writer-mismatch' }
     committed = structuredClone(reply.value)
     return { ok: true as const, value: asV42(committed,
