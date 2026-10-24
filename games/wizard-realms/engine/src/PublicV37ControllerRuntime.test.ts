@@ -9,6 +9,7 @@ import { resolvePublicV23Surface } from './domain/publicWorldV14Terrain'
 import { createFreshPublicV36Root, decodePublicV36Root, PUBLIC_V36_SCHEMA } from './domain/publicWorldV36Snapshot'
 import { createPublicV37Root, replayPublicV37Witness } from './domain/publicWorldV37Snapshot'
 import { createFreshPublicV37Root } from './domain/publicWorldV37Snapshot'
+import { previewPublicV37WindwardAction } from './domain/publicWorldV37WindwardAction'
 import { commitPublicV37 } from './domain/publicWorldV37Flow'
 import type { PublicV36MarkerProgress } from './domain/publicWorldV36MarkerAction'
 import type { WizardViewProjection } from './view/contracts'
@@ -39,6 +40,68 @@ function fixture(position?: { x: number; z: number }, active = false) {
   return createPublicV37Root(source)
 }
 describe('V37 controller and checked spell projection', () => {
+  it('keeps complete fresh and returned Greenway Windward cues unavailable', () => {
+    const fresh = createFreshPublicV37Root('wizard-realms').head
+    const view = (progress: PublicV36MarkerProgress) => projectPublicV37Windward(progress,
+      {} as WizardViewProjection).windwardStep
+    expect(view(fresh)).toEqual({ learned: false, checkedActions: true, glyph: null,
+      activeSeconds: 0, cooldownSeconds: 0, canCast: false })
+    const highland = fixture().head, glyph = highlandLandmark(fresh.state.seed)
+    const returned = { ...fresh, state: { ...fresh.state,
+      highland: highland.state.highland, discoveryMask: highland.state.discoveryMask,
+      windstep: { learned: true, activeUntilTick: 1200, nextCastTick: 1800,
+        practicedRouteIndices: [] } } }
+    expect(previewPublicV37WindwardAction(returned, { kind: 'windward-cast/v1' }))
+      .toEqual({ rejection: 'unavailable_here' })
+    expect(view(returned)).toEqual({ learned: true, checkedActions: true,
+      glyph: { position: [glyph.tile.center.x, glyph.tile.center.y, glyph.tile.center.z],
+        canStudy: false }, activeSeconds: 60, cooldownSeconds: 90, canCast: false,
+      unavailableReason: 'Charged for 60s. Safe, revealed westbound walking steps gain 25% on the dry Highland trail.' })
+    const knownUnlearned = { ...returned, state: { ...returned.state,
+      windstep: fresh.state.windstep } }
+    expect(view(knownUnlearned)?.glyph).toEqual({
+      position: [glyph.tile.center.x, glyph.tile.center.y, glyph.tile.center.z], canStudy: false })
+    expect(view(knownUnlearned)?.canCast).toBe(false)
+  })
+
+  it('preserves streamed study, ready cast, airborne, off-trail and cooldown cues', () => {
+    const progress = fixture().head, glyph = highlandLandmark(progress.state.seed)
+    const view = (current: PublicV36MarkerProgress) => projectPublicV37Windward(current,
+      {} as WizardViewProjection).windwardStep
+    expect(view(progress)).toEqual({ learned: false, checkedActions: true,
+      glyph: { position: [glyph.tile.center.x, glyph.tile.center.y, glyph.tile.center.z],
+        canStudy: true }, activeSeconds: 0, cooldownSeconds: 0, canCast: false })
+    const ready = { ...progress, state: { ...progress.state,
+      windstep: { ...progress.state.windstep, learned: true } } }
+    expect(previewPublicV37WindwardAction(ready, { kind: 'windward-cast/v1' }))
+      .toEqual({ rejection: null })
+    expect(view(ready)).toEqual({ learned: true, checkedActions: true,
+      glyph: { position: [glyph.tile.center.x, glyph.tile.center.y, glyph.tile.center.z],
+        canStudy: false }, activeSeconds: 0, cooldownSeconds: 0, canCast: true })
+    const airborneRuntime = createPublicV37ControllerRuntime(fixture(undefined, true),
+      vi.fn(async () => ({ ok: false as const, reason: 'unused' as const })))
+    expect(airborneRuntime.advanceFrame([{ type: 'jump' }], true).rejections).toEqual([])
+    const airborne = airborneRuntime.preview()
+    expect(previewPublicV37WindwardAction(airborne, { kind: 'windward-cast/v1' }).rejection)
+      .not.toBeNull()
+    expect(view(airborne)?.canCast).toBe(false)
+    const off = { x: 480, z: -432 }
+    const surface = resolvePublicV23Surface(ready.state, off, [])!
+    const offTrail = { ...ready, state: { ...ready.state,
+      discoveryMask: encodeDiscoveredTileIds([...new Set([
+        ...decodeDiscoveredTileIds(ready.state.discoveryMask), surface.tileId])].sort()),
+      player: { ...ready.state.player, position: { ...off, y: surface.floorY } } } }
+    expect(previewPublicV37WindwardAction(offTrail, { kind: 'windward-cast/v1' }).rejection)
+      .toBe('not_on_trail')
+    expect(view(offTrail)?.canCast).toBe(false)
+    const cooling = { ...ready, state: { ...ready.state, windstep: { ...ready.state.windstep,
+      activeUntilTick: 1200, nextCastTick: 1800 } } }
+    expect(previewPublicV37WindwardAction(cooling, { kind: 'windward-cast/v1' }).rejection)
+      .toBe('cooldown')
+    expect(view(cooling)).toMatchObject({ learned: true, activeSeconds: 60,
+      cooldownSeconds: 90, canCast: false })
+  })
+
   it('studies and casts through V37, previews 0.20 from normal 0.16, and reloads the identical result', async () => {
     const root = fixture(), store = createAtomicV37Store(new IDBFactory())
     const missing = await store.readChecked()

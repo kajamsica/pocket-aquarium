@@ -21,7 +21,7 @@ export function projectPublicV37Windward(progress: PublicV36MarkerProgress,
     glyph: known ? { position: [glyph.tile.center.x, glyph.tile.center.y, glyph.tile.center.z],
       canStudy: previewPublicV37WindwardAction(progress, { kind: 'windward-study/v1' }).rejection === null } : null,
     activeSeconds: grounded ? activeSeconds : 0, cooldownSeconds,
-    canCast: previewPublicV37WindwardAction(progress, { kind: 'windward-cast/v1' }).rejection === null,
+    canCast: state.movementOwner === 'streamed' && previewPublicV37WindwardAction(progress, { kind: 'windward-cast/v1' }).rejection === null,
     ...(activeSeconds ? { unavailableReason: grounded
       ? `Charged for ${activeSeconds}s. Safe, revealed westbound walking steps gain 25% on the dry Highland trail.`
       : 'Windward Step is charged. Land on the dry Highland trail to use it.' } : {}),
