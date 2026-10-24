@@ -74,6 +74,27 @@ describe('V26 click-to-column terrain picker', () => {
     expect(pick(scene, cameraAt(0, 0), [cell(0, 0)])).toEqual({ gx: 0, gz: 0 })
   })
 
+  it('picks revealed ground through only a decorative dig-site descendant', () => {
+    const scene = new THREE.Scene()
+    surface(scene)
+    const digSite = new THREE.Group()
+    digSite.name = 'Dig site: Old Cairn (dug)'
+    const decoration = new THREE.Group()
+    const ring = new THREE.Mesh(new THREE.CircleGeometry(0.7, 16),
+      new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    ring.rotation.x = -Math.PI / 2
+    decoration.add(ring)
+    decoration.position.y = 0.1
+    digSite.add(decoration)
+    scene.add(digSite)
+    const camera = cameraAt(0, 0)
+    expect(pick(scene, camera, [cell(0, 0)])).toEqual({ gx: 0, gz: 0 })
+    expect(pickV26TerrainColumn(scene, camera, bounds, 200, 100,
+      [cell(0, 0)], 'fill')).toEqual({ gx: 0, gz: 0 })
+    digSite.name = 'Unrelated visible marker'
+    expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
+  })
+
   it('targets only a saved visible pit from its frontmost wall for Fill', () => {
     const { scene, camera, face } = pitFace()
     const pit = { ...cell(0, 0), position: [0, -0.4, 0] as const }
