@@ -123,6 +123,35 @@ describe('V26 click-to-column terrain picker', () => {
     expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
   })
 
+  it('picks through multiple shallow terrain dressings but not tall dressing or a real blocker', () => {
+    const scene = new THREE.Scene()
+    surface(scene)
+    const dressing = new THREE.Group()
+    dressing.name = 'Terrain cell dressing'
+    const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.06), new THREE.MeshBasicMaterial())
+    const stem = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.1), new THREE.MeshBasicMaterial())
+    stone.position.y = 0.02; stem.position.y = 0.02
+    dressing.add(stone, stem); scene.add(dressing)
+    const camera = cameraAt(0, 0)
+    expect(pick(scene, camera, [cell(0, 0)])).toEqual({ gx: 0, gz: 0 })
+    stone.position.y = 0.5
+    expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
+    stone.position.y = 0.02
+    const blocker = surface(scene, 'Rock', 0.01)
+    for (const name of ['Rock', 'Greenway creek water', 'Terrain perimeter and cliff fascia']) {
+      blocker.name = name
+      expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
+    }
+    stone.visible = false; stem.visible = false; scene.remove(blocker)
+    const overlay = surface(scene, 'Unrelated dressing', 0.14)
+    scene.remove(overlay)
+    dressing.add(overlay)
+    const oblique = new THREE.PerspectiveCamera(60, 2, 0.1, 100)
+    oblique.position.set(-3, 0.5, 0)
+    oblique.lookAt(0, 0, 0)
+    expect(pick(scene, oblique, [cell(0, 0)])).toBeNull()
+  })
+
   it('targets only a saved visible pit from its frontmost wall for Fill', () => {
     const { scene, camera, face } = pitFace()
     const pit = { ...cell(0, 0), position: [0, -0.4, 0] as const }
