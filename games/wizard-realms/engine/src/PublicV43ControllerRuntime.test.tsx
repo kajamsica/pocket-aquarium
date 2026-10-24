@@ -57,11 +57,25 @@ async function setup() {
   return { factory, store, v42Store, start: started.value, makeRuntime }
 }
 
-function atGreenwayStore(logs: number): PublicV43Start {
+function atGreenwayStore(logs: number, chapterReady = false): PublicV43Start {
   const source = createFreshPublicV42Root('wizard-realms')
   const store = source.head.state.greenway.stores.find((entry) => entry.id === 'store-greenway')!
-  const genesis = { ...source.lineage.genesis, state: { ...source.head.state,
+  const genesis = { ...source.lineage.genesis,
+    ...(chapterReady && { greenwayWorks: { ...source.head.greenwayWorks,
+      builtBridgeIds: ['works4:bridge:greenway-creek:-14'],
+      builtLadderIds: ['works4:ladder:greenway-north-cliff:11'] },
+    claimedBridgeheadId: 'works4:bridge:greenway-creek:-14',
+    terrain: { ...source.head.terrain,
+      columns: [{ gx: -1, gz: 4, openDepth: 3, rewardDepth: 3, pitLadder: false }],
+      bag: { ...source.head.terrain.bag, soil: 2, stone: 1 } },
+    miningTools: { ...source.head.miningTools, basicPickOwned: true } }),
+    state: { ...source.head.state,
+    ...(chapterReady && { greenway: { ...source.head.state.greenway,
+      studiedInscriptionIds: ['greenway_waystone' as const] } }),
     player: { ...source.head.state.player, position: { ...store.position },
+      ...(chapterReady && { xp: 230, level: 3,
+        skillXp: { ...source.head.state.player.skillXp, construction: 140, excavation: 90 },
+        learnedSpellIds: ['wayfinder_glow' as const] }),
       inventory: [...source.head.state.player.inventory,
         { itemId: 'logs' as const, quantity: logs }] } } }
   const v42: PublicV42Root = { lineage: { origin: 'v41-migration',
@@ -385,6 +399,38 @@ describe('V43 checked controller bridge', () => {
     renderToStaticMarkup(createElement(PublicV23Controller, {
       version: 'v43', start: demoted, locks, store, v42Store }))
     expect(probe.starterChapterPrimary).toBe(false)
+  }, 120_000)
+
+  it('keeps chapter 6/6 visible beside the Ledger lead after checked order reload', async () => {
+    const factory = new IDBFactory(), store = createAtomicV43Store(factory)
+    const v42Store = createAtomicV42Store(factory)
+    const start = atGreenwayStore(4, true)
+    const render = (head: PublicV43Root['head']) => renderToStaticMarkup(createElement(
+      PublicV23Controller, { version: 'v43', start: { ...start, head }, locks, store,
+        v42Store }))
+    const before = render(start.head)
+    expect(before).toContain('Quest Journal · Next: Outfitters Ledger')
+    expect(before).toContain('The Creekside Errand: Chapter step 6 of 6')
+
+    const empty = await store.readChecked()
+    if (empty.status !== 'missing') throw Error('Expected empty V43 fixture store')
+    expect(await store.commit(empty.proof, { lineage: start.lineage, previous: null,
+      head: start.head })).toBe('committed')
+    const current = await store.readChecked()
+    if (current.status !== 'valid') throw Error('Missing checked chapter fixture')
+    const witness = { kind: 'fulfill-greenway-logs/v1' } as const
+    const progress = replayPublicV43Witness(current.root.head, witness)
+    expect(progress).not.toBeNull()
+    const next: PublicV43Root = { lineage: current.root.lineage, previous: current.root.head,
+      head: { ...progress!, schemaVersion: PUBLIC_V43_SCHEMA, saveRevision: 1, witness } }
+    expect(decodePublicV43CheckedSuccessor(current.root, next)).not.toBeNull()
+    expect(await store.commit(current.proof, next)).toBe('committed')
+    const reloaded = await createAtomicV43Store(factory).readChecked()
+    if (reloaded.status !== 'valid') throw Error('Missing checked completed chapter')
+    const after = render(reloaded.root.head)
+    expect(after).toContain('Quest Journal · Next: Outfitters Ledger')
+    expect(after).toContain('The Creekside Errand: Chapter complete, 6 of 6 steps')
+    expect(reloaded.root.head.greenwayOrder?.claimedAtSequence).toBeGreaterThan(0)
   }, 120_000)
 
   it('positions V43 mobile Safety away from the d-pad and Terrain tools', async () => {
