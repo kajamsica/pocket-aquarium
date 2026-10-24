@@ -74,6 +74,84 @@ describe('V26 click-to-column terrain picker', () => {
     expect(pick(scene, cameraAt(0, 0), [cell(0, 0)])).toEqual({ gx: 0, gz: 0 })
   })
 
+  it('picks revealed ground through only a decorative dig-site descendant', () => {
+    const scene = new THREE.Scene()
+    surface(scene)
+    const digSite = new THREE.Group()
+    digSite.name = 'Dig site: Old Cairn (dug)'
+    const decoration = new THREE.Group()
+    const ring = new THREE.Mesh(new THREE.CircleGeometry(0.7, 16),
+      new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    ring.rotation.x = -Math.PI / 2
+    decoration.add(ring)
+    decoration.position.y = 0.1
+    digSite.add(decoration)
+    scene.add(digSite)
+    const camera = cameraAt(0, 0)
+    expect(pick(scene, camera, [cell(0, 0)])).toEqual({ gx: 0, gz: 0 })
+    expect(pickV26TerrainColumn(scene, camera, bounds, 200, 100,
+      [cell(0, 0)], 'fill')).toEqual({ gx: 0, gz: 0 })
+    digSite.name = 'Unrelated visible marker'
+    expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
+  })
+
+  it('picks through the unbuilt dig-site ring and spade, but not another marker', () => {
+    const scene = new THREE.Scene()
+    surface(scene)
+    const marker = new THREE.Group()
+    marker.name = 'Unbuilt dig site first-prospect'
+    const decoration = new THREE.Group()
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.08, 5, 16),
+      new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    ring.rotation.x = -Math.PI / 2
+    ring.position.y = 0.04
+    const spade = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 0.15),
+      new THREE.MeshBasicMaterial())
+    spade.position.set(0.55, 0.65, 0)
+    spade.visible = false
+    decoration.add(ring, spade)
+    marker.add(decoration)
+    scene.add(marker)
+    const camera = cameraAt(0.55, 0)
+    expect(pickV26TerrainColumn(scene, camera, bounds, 200, 100,
+      [cell(0, 0)], 'fill')).toEqual({ gx: 0, gz: 0 })
+    ring.visible = false
+    spade.visible = true
+    expect(pickV26TerrainColumn(scene, camera, bounds, 200, 100,
+      [cell(0, 0)], 'fill')).toEqual({ gx: 0, gz: 0 })
+    marker.name = 'Unrelated visible marker'
+    expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
+  })
+
+  it('picks through multiple shallow terrain dressings but not tall dressing or a real blocker', () => {
+    const scene = new THREE.Scene()
+    surface(scene)
+    const dressing = new THREE.Group()
+    dressing.name = 'Terrain cell dressing'
+    const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.06), new THREE.MeshBasicMaterial())
+    const stem = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.1), new THREE.MeshBasicMaterial())
+    stone.position.y = 0.02; stem.position.y = 0.02
+    dressing.add(stone, stem); scene.add(dressing)
+    const camera = cameraAt(0, 0)
+    expect(pick(scene, camera, [cell(0, 0)])).toEqual({ gx: 0, gz: 0 })
+    stone.position.y = 0.5
+    expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
+    stone.position.y = 0.02
+    const blocker = surface(scene, 'Rock', 0.01)
+    for (const name of ['Rock', 'Greenway creek water', 'Terrain perimeter and cliff fascia']) {
+      blocker.name = name
+      expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
+    }
+    stone.visible = false; stem.visible = false; scene.remove(blocker)
+    const overlay = surface(scene, 'Unrelated dressing', 0.14)
+    scene.remove(overlay)
+    dressing.add(overlay)
+    const oblique = new THREE.PerspectiveCamera(60, 2, 0.1, 100)
+    oblique.position.set(-3, 0.5, 0)
+    oblique.lookAt(0, 0, 0)
+    expect(pick(scene, oblique, [cell(0, 0)])).toBeNull()
+  })
+
   it('targets only a saved visible pit from its frontmost wall for Fill', () => {
     const { scene, camera, face } = pitFace()
     const pit = { ...cell(0, 0), position: [0, -0.4, 0] as const }

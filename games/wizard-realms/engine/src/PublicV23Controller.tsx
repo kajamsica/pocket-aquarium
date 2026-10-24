@@ -1016,7 +1016,7 @@ body:has(:is([data-public-version=v35],[data-public-version=v36],[data-public-ve
 :is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44]){height:100dvh}
 :is([data-public-version=v35],[data-public-version=v36],[data-public-version=v37],[data-public-version=v38],[data-public-version=v39],[data-public-version=v40],[data-public-version=v41],[data-public-version=v42],[data-public-version=v43],[data-public-version=v44]) .wr-surface{height:100%;min-height:0}
 }
-@media(min-width:901px){[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide{left:166px;bottom:16px}}
+@media(min-width:901px){[data-public-version=v26] .v25-start-guide,[data-public-version=v27] .v25-start-guide,[data-public-version=v28] .v25-start-guide,[data-public-version=v29] .v25-start-guide,[data-public-version=v30] .v25-start-guide,[data-public-version=v31] .v25-start-guide,[data-public-version=v32] .v25-start-guide,[data-public-version=v33] .v25-start-guide,[data-public-version=v34] .v25-start-guide,[data-public-version=v43] .v25-start-guide{left:166px;bottom:16px}}
 `
 export function publicV23SavedWorkMessage(event: NonNullable<Extract<
   Awaited<ReturnType<Runtime['action']>>, { status: 'saved' }>['workEvent']>): string {
@@ -2878,7 +2878,17 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       soilPlaceRejection={soilPlaceRejection}
       starterChapterActors={v43}
       starterChapterPrimary={!!chapterIsLead}
-      greenwayLogOrder={v43 && !mounted ? <><section aria-label="Greenway carpenter order">
+      greenwayLogOrder={v43 && !mounted ? <>{starterChapter && <section aria-label="Outfitters keeper">
+        <h3 className="wr-caption">Outfitters keeper</h3>
+        {starterChapter.complete
+          ? <p className="wr-caption">Fine work on the Creekside Errand. The north-cliff ladder, Wayfinder Glow, and the Sedgehorn trail are waiting beyond.</p>
+          : <><p className="wr-caption">{starterChapter.progressLabel}: {starterChapter.objective}</p>
+            <p className="wr-caption">{greenwayOrderClaimed
+              ? 'Your timber order is recorded. Keep exploring to finish the errand.'
+              : greenwayOrderLogs < GREENWAY_LOG_ORDER.quantity
+                ? `I can take four spare logs when you have them (${greenwayOrderLogs}/4). Keep route timber for bridges and ladders first.`
+                : 'I can take four logs now, but keep enough timber for your next bridge or ladder.'}</p></>}
+      </section>}<section aria-label="Greenway carpenter order">
         <h3 className="wr-caption">Carpenter order · once</h3>
         {greenwayOrderClaimed
           ? <p role="status" className="wr-caption">Claimed. Four logs were delivered for 10 coins.</p>
@@ -2917,6 +2927,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
       <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {journalLeadTitle ? `Next: ${journalLeadTitle}` : 'Route recorded'}</span>
+        {starterChapter && <small>{starterChapter.title}: {starterChapter.progressLabel}</small>}
         <small>{v44 && adult?.visible
           ? adult.mode === 'riding' ? 'Riding the adult Sedgehorn. Open to dismount.'
             : `Adult Sedgehorn ready, ${Math.ceil(adultDistance ?? 0)} m away. Open to mount.`

@@ -119,6 +119,21 @@ const TERRAIN_TARGET_OUTLINE = new THREE.BufferGeometry().setFromPoints([
 ])
 const TERRAIN_TARGET_MATERIAL = new THREE.LineBasicMaterial({ color: '#b7d8e1', transparent: true,
   opacity: 0.8, depthWrite: false })
+export const SOIL_PLACE_VALID_MATERIAL = new THREE.LineBasicMaterial({ color: '#dfff38', transparent: true,
+  opacity: 1, depthWrite: false, depthTest: true, toneMapped: false })
+const SOIL_PLACE_BLOCKED_MATERIAL = new THREE.LineBasicMaterial({ color: '#efb75d', transparent: true,
+  opacity: 0.95, depthWrite: false, depthTest: false })
+const SOIL_PLACE_REJECTION_HINTS = new Map<string, string>([
+  ['wet', 'Wet ground: soil cannot be placed in a river or wetland.'],
+  ['occupied', 'Occupied ground: your position, a route, or an obstacle blocks soil here.'],
+  ['open_column', 'Open pit: fill it before placing soil.'],
+  ['too_far', 'Too far away: move closer to place soil.'],
+  ['invalid_pose', 'Stand on the ground before placing soil.'],
+  ['requires_tool', 'Equip a field spade to place soil.'],
+  ['already_raised', 'This ground is already raised with soil.'],
+  ['requires_soil', 'No soil is available in your terrain bag.'],
+  ['cells_full', 'The raised soil cell limit has been reached.'],
+])
 const WORKS_SURVEY_MATERIAL = new THREE.LineBasicMaterial({ color: '#c6e7ed', transparent: true,
   opacity: 0.95, depthWrite: false })
 const MIREGLASS_PATCH_GEOMETRY = new THREE.CircleGeometry(1, 9)
@@ -1177,7 +1192,7 @@ function AdultSedgehorn({ source, mount, pose }: {
   </group>
 }
 
-/** Scene-only chapter characters never intercept terrain picks or affect simulation. */
+/** Chapter characters are visual-only for simulation; the keeper accepts Talk picks. */
 function StarterOutfittersKeeper({ source, position }: { source: GLTF;
   position: [number, number, number] }) {
   const model = useMemo(() => {
@@ -1188,7 +1203,6 @@ function StarterOutfittersKeeper({ source, position }: { source: GLTF;
       if ((node as THREE.Mesh).isMesh !== true) return
       const mesh = node as THREE.Mesh
       mesh.castShadow = true
-      mesh.raycast = () => {}
       const recolor = (material: THREE.Material) => {
         if (!(material instanceof THREE.MeshStandardMaterial)
           || !['V9_violet_cloth', 'V9_violet_lining'].includes(material.name)) return material
@@ -2412,6 +2426,41 @@ export type SceneTerrainPicker = (clientX: number, clientY: number,
   kind?: V26TerrainPickKind) => V26PickedTerrainColumn | null
 export type SceneGroundPicker = (clientX: number, clientY: number) =>
   { x: number; y: number; z: number } | null
+export type SceneKeeperPicker = (clientX: number, clientY: number) => boolean
+const GREENWAY_KEEPER_OFFSET_Z = 1.5
+const GREENWAY_KEEPER_TALK_RANGE_M = 1.5
+
+/** The keeper's Talk radius stays inside the checked three-metre store/order radius. */
+export function greenwayKeeperNearby(projection: WizardViewProjection): boolean {
+  const store = projection.stores.find((candidate) => candidate.id === 'store-greenway')
+  return !!store && projection.nearbyStoreId === store.id
+    && Math.hypot(projection.player.position[0] - store.position[0],
+      projection.player.position[1] - store.position[1],
+      projection.player.position[2] - store.position[2] - GREENWAY_KEEPER_OFFSET_Z)
+      <= GREENWAY_KEEPER_TALK_RANGE_M
+}
+
+/** A front-most, visible keeper mesh is the only scene click that opens Talk. */
+export function pickVisibleKeeper(scene: THREE.Scene, camera: THREE.Camera,
+  bounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  clientX: number, clientY: number): boolean {
+  if (!(camera instanceof THREE.PerspectiveCamera || camera instanceof THREE.OrthographicCamera)
+    || ![bounds.left, bounds.top, bounds.width, bounds.height, clientX, clientY].every(Number.isFinite)
+    || bounds.width <= 0 || bounds.height <= 0
+    || clientX < bounds.left || clientX > bounds.left + bounds.width
+    || clientY < bounds.top || clientY > bounds.top + bounds.height) return false
+  const keeper = scene.getObjectByName('Greenway Outfitters keeper')
+  if (!keeper?.visible) return false
+  scene.updateMatrixWorld(true)
+  camera.updateMatrixWorld()
+  const ray = new THREE.Raycaster()
+  ray.setFromCamera(new THREE.Vector2((clientX - bounds.left) / bounds.width * 2 - 1,
+    1 - (clientY - bounds.top) / bounds.height * 2), camera)
+  const meshes: THREE.Mesh[] = []
+  scene.traverseVisible((object) => { if (object instanceof THREE.Mesh) meshes.push(object) })
+  const hit = ray.intersectObjects(meshes, false)[0]
+  return !!hit && !!keeper.getObjectById(hit.object.id)
+}
 
 export function treeMeshBlocksGroundPick(object: THREE.Object3D) {
   if (!(object instanceof THREE.Mesh)
@@ -2499,6 +2548,51 @@ export function sceneTerrainHoverFeedback(mode: 'dig' | 'fill' | 'mine' | 'place
   if (!hovering || !candidate) return null
   return target ? candidate : mode === 'mine'
     ? 'Rocks are scenery; wet ground is blocked. Mine dry ground within 5 m.' : null
+}
+
+export function sceneSoilPlaceEmptyGuidance(
+  preview: readonly { rejection: string | null }[] | undefined,
+  soilAvailable?: number): string | null {
+  if (soilAvailable === 0) return 'No soil in your terrain bag. Use Terrain Dig with a field spade to collect soil before Place soil.'
+  return preview && !preview.some(({ rejection }) => rejection === null)
+    ? 'No clear soil target nearby. Move farther to clear, dry ground, then try Place soil again.'
+    : null
+}
+
+export function sceneMatchedSoilPlacePreview(preview: readonly Readonly<{
+  gx: number; gz: number; rejection: string | null }>[] | undefined,
+  revealed: readonly WizardTerrainCell[]): { cell: WizardTerrainCell; gx: number; gz: number;
+    rejection: string | null }[] {
+  const matched: { cell: WizardTerrainCell; gx: number; gz: number; rejection: string | null }[] = []
+  for (const row of preview?.slice(0, 9) ?? []) {
+    const matches = revealed.filter((cell) => cell.id === `tile-${row.gx + 3}-${row.gz + 3}`
+      && cell.size[0] === WORLD_CELL_METERS && cell.size[1] === WORLD_CELL_METERS
+      && cell.position[0] === row.gx * WORLD_CELL_METERS
+      && cell.position[2] === row.gz * WORLD_CELL_METERS)
+    if (matches.length === 1) matched.push({ cell: matches[0], ...row })
+  }
+  return matched
+}
+
+export function sceneNearestSoilPlaceGuidance(preview: readonly Readonly<{
+  gx: number; gz: number; rejection: string | null }>[] | undefined,
+  playerPosition: readonly [number, number, number]): string | null {
+  let nearest: { gx: number; gz: number } | null = null
+  let distance = Infinity
+  for (const row of preview ?? []) {
+    if (row.rejection !== null) continue
+    const nextDistance = Math.hypot(row.gx * WORLD_CELL_METERS - playerPosition[0],
+      row.gz * WORLD_CELL_METERS - playerPosition[2])
+    if (nextDistance < distance) { nearest = row; distance = nextDistance }
+  }
+  if (!nearest) return null
+  const dx = nearest.gx * WORLD_CELL_METERS - playerPosition[0]
+  const dz = nearest.gz * WORLD_CELL_METERS - playerPosition[2]
+  const eastWest = dx >= 0 ? 'east' : 'west'
+  const northSouth = dz >= 0 ? 'south' : 'north'
+  const direction = Math.abs(dx) >= Math.abs(dz) * 2 ? eastWest
+    : Math.abs(dz) >= Math.abs(dx) * 2 ? northSouth : `${northSouth}${eastWest}`
+  return `Checked dry soil target about ${Math.round(distance)} m ${direction} (x ${nearest.gx * WORLD_CELL_METERS}, z ${nearest.gz * WORLD_CELL_METERS}). Tap clear ground inside its bright green outline.`
 }
 
 /** A neutral view hint, not a terrain-action authorization. The writer checks every tap. */
@@ -2628,7 +2722,7 @@ function SaveFrameLoopResume({ saveInProgress, frameloop, inputTrace }: {
 }
 
 export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
-  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, onTerrainHoverFeedback, inputTrace,
+  onAimPickerReady, onTerrainPickerReady, onGroundPickerReady, onKeeperPickerReady, onTerrainHoverFeedback, inputTrace,
   saveInProgress = false, starterChapterActors = false }: {
   projection: WizardViewProjection
   cameraOrbit: RefObject<readonly [number, number]>
@@ -2637,6 +2731,7 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
   onAimPickerReady?: (picker: SceneWorkAimPicker) => void
   onTerrainPickerReady?: (picker: SceneTerrainPicker) => void
   onGroundPickerReady?: (picker: SceneGroundPicker) => void
+  onKeeperPickerReady?: (picker: SceneKeeperPicker) => void
   onTerrainHoverFeedback?: (feedback: string | null) => void
   inputTrace?: PublicV17InputTrace | null
   saveInProgress?: boolean
@@ -2703,8 +2798,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
     ? visual.stores.find((store) => store.id === 'store-greenway') : undefined
   const keeperPosition: [number, number, number] | null = keeperStore
     && revealedTerrain.some((cell) => Math.abs(cell.position[0] - keeperStore.position[0]) < cell.size[0] / 2
-      && Math.abs(cell.position[2] - (keeperStore.position[2] + 2.6)) < cell.size[1] / 2)
-    ? [keeperStore.position[0], keeperStore.position[1], keeperStore.position[2] + 2.6] : null
+      && Math.abs(cell.position[2] - (keeperStore.position[2] + GREENWAY_KEEPER_OFFSET_Z)) < cell.size[1] / 2)
+    ? [keeperStore.position[0], keeperStore.position[1], keeperStore.position[2] + GREENWAY_KEEPER_OFFSET_Z] : null
   // The far-bank tile at (20,24) is off every creek bridge lane. Its default-seed ore
   // protects the cell from soil placement while present; the visual has no collider.
   const wildCell = starterChapterActors && !publicV25RiverCellAtGrid(projection.seed, 5, 6)
@@ -2762,12 +2857,27 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       canvas.removeEventListener('pointercancel', clear)
     }
   }, [hoverSurface, v26HoverEnabled, hoverPickKind])
-  const targetedTerrain = terrainTargetHint
+  const soilPlacePreview = terrainMode === 'place-soil' && terrainTargetHint
+    ? projection.v31Soil?.placePreview : undefined
+  const soilPreviewCells = sceneMatchedSoilPlacePreview(soilPlacePreview, revealedTerrain)
+  const renderableSoilPreview = soilPlacePreview ? soilPreviewCells : undefined
+  const hoveredSoilCell = hoveringTerrainCanvas && hoveredTerrain
+    ? soilPreviewCells.find(({ cell }) => cell.position[0] === hoveredTerrain.gx * WORLD_CELL_METERS
+      && cell.position[2] === hoveredTerrain.gz * WORLD_CELL_METERS) : undefined
+  const targetedTerrain = terrainTargetHint && !soilPlacePreview
     ? v26TargetedTerrainCell(projection, revealedTerrain, hoveredTerrain) : null
-  const terrainHoverFeedback = sceneTerrainHoverFeedback(terrainMode,
-    terrainTargetHint, targetedTerrain, hoveringTerrainCanvas)
-  useEffect(() => { onTerrainHoverFeedback?.(terrainHoverFeedback) },
-    [onTerrainHoverFeedback, terrainHoverFeedback])
+  const terrainHoverFeedback = soilPlacePreview
+    ? hoveredSoilCell?.rejection === null ? 'Place soil here. Tap to raise this dry cell.'
+      : hoveredSoilCell?.rejection
+        ? SOIL_PLACE_REJECTION_HINTS.get(hoveredSoilCell.rejection) ?? 'Soil cannot be placed here.' : null
+    : sceneTerrainHoverFeedback(terrainMode, terrainTargetHint, targetedTerrain, hoveringTerrainCanvas)
+  const soilPlaceEmptyGuidance = terrainMode === 'place-soil'
+    ? sceneSoilPlaceEmptyGuidance(renderableSoilPreview, projection.v31Soil?.soilAvailable) : null
+  const terrainGuidance = terrainHoverFeedback ?? soilPlaceEmptyGuidance
+    ?? (!hoveringTerrainCanvas || !hoveredTerrain
+      ? sceneNearestSoilPlaceGuidance(renderableSoilPreview, projection.player.position) : null)
+  useEffect(() => { onTerrainHoverFeedback?.(terrainGuidance) },
+    [onTerrainHoverFeedback, terrainGuidance])
   const terrainRevision = terrainSignature(visualTerrain)
   const v27SurfaceReady = projection.v27WalkableSurface === true
     && Boolean(projection.v26ValleyRimSegments?.length)
@@ -2871,6 +2981,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         onTerrainPickerReady?.(terrainPicker)
         onGroundPickerReady?.((clientX, clientY) => pickVisibleGroundPoint(scene, camera,
           gl.domElement.getBoundingClientRect(), clientX, clientY, revealedTerrainRef.current))
+        onKeeperPickerReady?.((clientX, clientY) => pickVisibleKeeper(scene, camera,
+          gl.domElement.getBoundingClientRect(), clientX, clientY))
         if (projection.v26ValleyRimSegments !== undefined) {
           setHoverSurface({ canvas: gl.domElement, picker: terrainPicker })
         }
@@ -2927,6 +3039,14 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
         geometry={TERRAIN_TARGET_OUTLINE} material={TERRAIN_TARGET_MATERIAL}
         position={[targetedTerrain.position[0], targetedTerrain.position[1] + 0.14,
           targetedTerrain.position[2]]} />}
+      {soilPreviewCells.filter(({ rejection }) => rejection === null).map(({ cell }) =>
+        <lineLoop key={cell.id} name="Checked soil place preview" geometry={TERRAIN_TARGET_OUTLINE}
+          material={SOIL_PLACE_VALID_MATERIAL} renderOrder={2}
+          position={[cell.position[0], cell.position[1] + 0.2, cell.position[2]]} />)}
+      {hoveredSoilCell?.rejection && <lineLoop name="Blocked soil place preview"
+        geometry={TERRAIN_TARGET_OUTLINE} material={SOIL_PLACE_BLOCKED_MATERIAL}
+        position={[hoveredSoilCell.cell.position[0], hoveredSoilCell.cell.position[1] + 0.16,
+          hoveredSoilCell.cell.position[2]]} />}
       {projection.v26ValleyRimSegments && <V26ValleyRimLayer
         segments={projection.v26ValleyRimSegments} cells={revealedTerrain} />}
       {projection.v26PitLadders && <V26PitLadderLayer
@@ -3007,8 +3127,8 @@ export function WizardScene({ projection, cameraOrbit, orbiting, terrainMode,
       left: 12, bottom: wayfarerV9.error ? 78 : 12, maxWidth: 380, padding: '10px 12px', borderRadius: 6,
       border: '1px solid #ee8585', background: '#311b22ee', color: '#fff2f2',
       font: '13px system-ui, sans-serif' }}>{sedgehorn.error}</div>}
-    {terrainHoverFeedback && <div className="wr-terrain-hover-hint" role="status">
-      {terrainHoverFeedback}</div>}
+    {terrainMode !== 'place-soil' && terrainGuidance && <div className="wr-terrain-hover-hint" role="status">
+      {terrainGuidance}</div>}
     {!softwareGraphics && <label style={{ position: 'absolute', zIndex: 2, right: 10, top: 232,
       display: 'flex', alignItems: 'center', gap: 6, padding: '5px 7px', borderRadius: 7,
       background: '#102622d9', color: '#d3e7e7', font: '12px system-ui, sans-serif' }}

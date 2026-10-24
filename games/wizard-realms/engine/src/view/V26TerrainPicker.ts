@@ -8,6 +8,8 @@ export type V26OpenPitColumn = Readonly<{ gx: number; gz: number; openDepth: num
 type CanvasBounds = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>
 const EDGE_EPSILON_METERS = 0.001
 const PIT_EDGE_TOLERANCE_METERS = 0.025
+const DRESSING_HEIGHT_TOLERANCE_METERS = 0.16
+const DRESSING_LATERAL_TOLERANCE_METERS = 0.6
 
 /** A click names only frontmost revealed ground, or an opted-in saved pit's frontmost face. */
 export function pickV26TerrainColumn(scene: THREE.Scene, camera: THREE.Camera,
@@ -30,15 +32,23 @@ export function pickV26TerrainColumn(scene: THREE.Scene, camera: THREE.Camera,
   const meshes: THREE.Mesh[] = []
   scene.traverseVisible((object) => {
     if (!(object instanceof THREE.Mesh)) return
+    for (let parent = object.parent; parent; parent = parent.parent) {
+      if (parent instanceof THREE.Group && (parent.name.startsWith('Dig site:')
+        || parent.name.startsWith('Unbuilt dig site '))) return
+    }
     const materials = Array.isArray(object.material) ? object.material : [object.material]
     if (materials.some((material) => material.visible && (!material.transparent || material.opacity > 0))) {
       meshes.push(object)
     }
   })
-  const hit = ray.intersectObjects(meshes, false)[0]
+  const hits = ray.intersectObjects(meshes, false)
+  let dressingHits = 0
+  while (hits[dressingHits]?.object.parent?.name === 'Terrain cell dressing') dressingHits++
+  const hit = hits[dressingHits]
   if (!hit || scene.fog instanceof THREE.Fog && hit.distance >= scene.fog.far
     || !Number.isFinite(hit.point.x) || !Number.isFinite(hit.point.y)
     || !Number.isFinite(hit.point.z)) return null
+  if (dressingHits > 0 && hit.object.name !== 'Continuous terrain surface') return null
 
   const revealedCell = (gx: number, gz: number) => {
     if (!Number.isSafeInteger(gx) || !Number.isSafeInteger(gz)
@@ -79,5 +89,15 @@ export function pickV26TerrainColumn(scene: THREE.Scene, camera: THREE.Camera,
   const gz = Math.ceil(hit.point.z / WORLD_CELL_METERS - 0.5)
   if (Math.abs(hit.point.x - gx * WORLD_CELL_METERS) >= WORLD_CELL_METERS / 2 - EDGE_EPSILON_METERS
     || Math.abs(hit.point.z - gz * WORLD_CELL_METERS) >= WORLD_CELL_METERS / 2 - EDGE_EPSILON_METERS) return null
+  for (let i = 0; i < dressingHits; i++) {
+    const dressing = hits[i]
+    if (!Number.isFinite(dressing.point.x) || !Number.isFinite(dressing.point.y)
+      || !Number.isFinite(dressing.point.z)
+      || Math.abs(dressing.point.y - hit.point.y) > DRESSING_HEIGHT_TOLERANCE_METERS
+      || Math.hypot(dressing.point.x - hit.point.x, dressing.point.z - hit.point.z)
+        > DRESSING_LATERAL_TOLERANCE_METERS
+      || Math.ceil(dressing.point.x / WORLD_CELL_METERS - 0.5) !== gx
+      || Math.ceil(dressing.point.z / WORLD_CELL_METERS - 0.5) !== gz) return null
+  }
   return revealedCell(gx, gz) ? { gx: gx || 0, gz: gz || 0 } : null
 }

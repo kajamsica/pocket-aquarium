@@ -166,6 +166,74 @@ export function previewPublicV31SoilAction(progress: PublicV31Progress, rawWitne
   return { rejection: result.rejection ?? null }
 }
 
+function soilActionRejection(progress: PublicV31Progress, witness: PublicV31SoilWitness,
+  playerPose: ReturnType<typeof projectPublicV31Pose>): string | null {
+  const { gx, gz, kind } = witness, { state, terrain, raisedSoilCells } = progress
+  const id = tileId(gx, gz)
+  if (!discoveryMaskHasTileId(state.discoveryMask, id)) return 'unrevealed'
+  if (!playerPose || state.player.verticalVelocity !== 0
+    || Math.abs(playerPose.effective.position.y - playerPose.effective.floorY) > 1e-6)
+    return 'invalid_pose'
+  if (publicV25RiverCellAtGrid(state.seed, gx, gz)
+    || publicV26TerrainCellIsWet(state.seed, gx, gz, state.movementOwner)) return 'wet'
+  const x = gx * WORLD_CELL_METERS, z = gz * WORLD_CELL_METERS
+  const support = nativeSupport(progress, gx, gz)
+  if (!support || !('kind' in support ? support.kind === 'ground'
+    : support.support === 'terrain')) return 'occupied'
+  if (Math.abs(state.player.position.x - x) < 2
+    && Math.abs(state.player.position.z - z) < 2 || occupied(progress, gx, gz, id))
+    return 'occupied'
+  const column = terrain.columns.find((entry) => entry.gx === gx && entry.gz === gz)
+  if ((column?.openDepth ?? 0) !== 0) return 'open_column'
+  const present = publicV31HasRaisedSoilCell(raisedSoilCells, gx, gz)
+  const targetY = support.floorY + (present ? 0.4 : 0)
+  if (Math.hypot(playerPose.effective.position.x - x,
+    playerPose.effective.position.y - targetY,
+    playerPose.effective.position.z - z) > 5) return 'too_far'
+  const hasSpade = state.player.equipment.mainHand === 'field_spade'
+    && state.player.inventory.some((stack) => stack.itemId === 'field_spade' && stack.quantity > 0)
+  if (!hasSpade) return 'requires_tool'
+  if (kind === 'soil-place/v1' && present) return 'already_raised'
+  if (kind === 'soil-remove/v1' && !present) return 'not_raised'
+  if (kind === 'soil-place/v1' && (!terrain.bag.soil || raisedSoilCells.length >= 256))
+    return terrain.bag.soil ? 'cells_full' : 'requires_soil'
+  if (kind === 'soil-remove/v1') {
+    const bagCount = materials.reduce((sum, material) => sum + terrain.bag[material], 0)
+    const used = backpackSlotsUsed(state.player.inventory, state.player.tradeSlots, bagCount)
+    if (bagCount >= 256 || used + 1 > state.player.backpackCapacity) return 'capacity'
+  }
+  return null
+}
+
+/** Read-only place witnesses from checked progress, without re-decoding or successors. */
+export function previewPublicV31SoilPlaces(rawProgress: PublicV31Progress):
+  readonly Readonly<{ gx: number; gz: number; rejection: string | null }>[] {
+  try {
+    if (rawProgress.terrain.bag.soil === 0
+      || rawProgress.state.player.equipment.mainHand !== 'field_spade') return []
+    const { x, z } = rawProgress.state.player.position
+    const playerPose = projectPublicV31Pose(rawProgress)
+    const radius = 5.5
+    const preview: { gx: number; gz: number; rejection: string | null }[] = []
+    for (let gx = Math.ceil((x - radius) / WORLD_CELL_METERS);
+      gx <= Math.floor((x + radius) / WORLD_CELL_METERS); gx += 1) {
+      for (let gz = Math.ceil((z - radius) / WORLD_CELL_METERS);
+        gz <= Math.floor((z + radius) / WORLD_CELL_METERS); gz += 1) {
+        if (!inGrid(gx) || !inGrid(gz)
+          || Math.hypot(gx * WORLD_CELL_METERS - x, gz * WORLD_CELL_METERS - z) > radius
+          || !discoveryMaskHasTileId(rawProgress.state.discoveryMask, tileId(gx, gz))) continue
+        let rejection: string | null
+        try {
+          rejection = soilActionRejection(rawProgress,
+            { kind: 'soil-place/v1', gx, gz }, playerPose)
+        } catch { rejection = 'invalid_progress' }
+        preview.push({ gx, gz, rejection })
+      }
+    }
+    return preview
+  } catch { return [] }
+}
+
 /** Witness-owned soil accounting. No geology, XP, or event-sequence transition occurs. */
 export function confirmPublicV31SoilAction(rawProgress: PublicV31Progress,
   rawWitness: unknown): PublicV31SoilResult {
@@ -175,40 +243,11 @@ export function confirmPublicV31SoilAction(rawProgress: PublicV31Progress,
   const progress = decodePublicV31ActionProgress(rawProgress)
   if (!progress) return reject('invalid_progress')
   try {
-    const { gx, gz, kind } = witness, { state, terrain, raisedSoilCells } = progress
-    const id = tileId(gx, gz)
-    if (!discoveryMaskHasTileId(state.discoveryMask, id)) return reject('unrevealed')
+    const { gx, gz, kind } = witness, { terrain, raisedSoilCells } = progress
     const playerPose = projectPublicV31Pose(progress)
-    if (!playerPose || state.player.verticalVelocity !== 0
-      || Math.abs(playerPose.effective.position.y - playerPose.effective.floorY) > 1e-6)
-      return reject('invalid_pose')
-    if (publicV25RiverCellAtGrid(state.seed, gx, gz)
-      || publicV26TerrainCellIsWet(state.seed, gx, gz, state.movementOwner)) return reject('wet')
-    const x = gx * WORLD_CELL_METERS, z = gz * WORLD_CELL_METERS
-    const support = nativeSupport(progress, gx, gz)
-    if (!support || !('kind' in support ? support.kind === 'ground'
-      : support.support === 'terrain')) return reject('occupied')
-    if (Math.abs(state.player.position.x - x) < 2
-      && Math.abs(state.player.position.z - z) < 2 || occupied(progress, gx, gz, id))
-      return reject('occupied')
-    const column = terrain.columns.find((entry) => entry.gx === gx && entry.gz === gz)
-    if ((column?.openDepth ?? 0) !== 0) return reject('open_column')
-    const targetY = support.floorY + (publicV31HasRaisedSoilCell(raisedSoilCells, gx, gz) ? 0.4 : 0)
-    if (Math.hypot(playerPose.effective.position.x - x,
-      playerPose.effective.position.y - targetY,
-      playerPose.effective.position.z - z) > 5) return reject('too_far')
-    const hasSpade = state.player.equipment.mainHand === 'field_spade'
-      && state.player.inventory.some((stack) => stack.itemId === 'field_spade' && stack.quantity > 0)
-    if (!hasSpade) return reject('requires_tool')
+    const rejection = soilActionRejection(progress, witness, playerPose)
+    if (rejection) return reject(rejection)
     const present = publicV31HasRaisedSoilCell(raisedSoilCells, gx, gz)
-    if (kind === 'soil-place/v1' && present) return reject('already_raised')
-    if (kind === 'soil-remove/v1' && !present) return reject('not_raised')
-    if (kind === 'soil-place/v1' && (!terrain.bag.soil || raisedSoilCells.length >= 256))
-      return reject(terrain.bag.soil ? 'cells_full' : 'requires_soil')
-    const bagCount = materials.reduce((sum, material) => sum + terrain.bag[material], 0)
-    const used = backpackSlotsUsed(state.player.inventory, state.player.tradeSlots, bagCount)
-    if (kind === 'soil-remove/v1' && (bagCount >= 256
-      || used + 1 > state.player.backpackCapacity)) return reject('capacity')
     const delta = kind === 'soil-place/v1' ? -1 : 1
     const next: PublicV31Progress = { ...progress,
       terrain: { ...terrain, bag: { ...terrain.bag, soil: terrain.bag.soil + delta } },
