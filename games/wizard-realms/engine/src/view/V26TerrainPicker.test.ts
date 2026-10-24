@@ -95,6 +95,34 @@ describe('V26 click-to-column terrain picker', () => {
     expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
   })
 
+  it('picks through the unbuilt dig-site ring and spade, but not another marker', () => {
+    const scene = new THREE.Scene()
+    surface(scene)
+    const marker = new THREE.Group()
+    marker.name = 'Unbuilt dig site first-prospect'
+    const decoration = new THREE.Group()
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.08, 5, 16),
+      new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    ring.rotation.x = -Math.PI / 2
+    ring.position.y = 0.04
+    const spade = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 0.15),
+      new THREE.MeshBasicMaterial())
+    spade.position.set(0.55, 0.65, 0)
+    spade.visible = false
+    decoration.add(ring, spade)
+    marker.add(decoration)
+    scene.add(marker)
+    const camera = cameraAt(0.55, 0)
+    expect(pickV26TerrainColumn(scene, camera, bounds, 200, 100,
+      [cell(0, 0)], 'fill')).toEqual({ gx: 0, gz: 0 })
+    ring.visible = false
+    spade.visible = true
+    expect(pickV26TerrainColumn(scene, camera, bounds, 200, 100,
+      [cell(0, 0)], 'fill')).toEqual({ gx: 0, gz: 0 })
+    marker.name = 'Unrelated visible marker'
+    expect(pick(scene, camera, [cell(0, 0)])).toBeNull()
+  })
+
   it('targets only a saved visible pit from its frontmost wall for Fill', () => {
     const { scene, camera, face } = pitFace()
     const pit = { ...cell(0, 0), position: [0, -0.4, 0] as const }

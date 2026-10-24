@@ -31,7 +31,8 @@ export function pickV26TerrainColumn(scene: THREE.Scene, camera: THREE.Camera,
   scene.traverseVisible((object) => {
     if (!(object instanceof THREE.Mesh)) return
     for (let parent = object.parent; parent; parent = parent.parent) {
-      if (parent instanceof THREE.Group && parent.name.startsWith('Dig site:')) return
+      if (parent instanceof THREE.Group && (parent.name.startsWith('Dig site:')
+        || parent.name.startsWith('Unbuilt dig site '))) return
     }
     const materials = Array.isArray(object.material) ? object.material : [object.material]
     if (materials.some((material) => material.visible && (!material.transparent || material.opacity > 0))) {
