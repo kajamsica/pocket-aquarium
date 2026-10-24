@@ -10,8 +10,9 @@ import { createAtomicV42Store } from './domain/atomicV42Database'
 import { createAtomicV43Store } from './domain/atomicV43Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
 import { projectPublicV31Pose } from './domain/publicWorldV31Support'
+import { publicV17StarterSupportAt } from './domain/publicWorldV17StarterMovement'
 import { commitPublicV43, resumePublicV43, startFreshPublicV43,
-  startPublicV43 } from './domain/publicWorldV43Flow'
+  startPublicV43, requestPublicV43ReturnHome } from './domain/publicWorldV43Flow'
 import type { PublicV43Start } from './domain/publicWorldV43Flow'
 import { createFreshPublicV42Root, PUBLIC_V42_SCHEMA } from './domain/publicWorldV42Snapshot'
 import type { PublicV42Root } from './domain/publicWorldV42Snapshot'
@@ -445,6 +446,103 @@ describe('V43 checked controller bridge', () => {
     expect(frame(conflicted).rejections).toEqual([])
     expect(await conflicted.save()).toEqual({ status: 'blocked', reason: 'successor-conflict' })
     expect(conflicted.status().gate).toBe('blocked')
+  }, 120_000)
+
+  it('rejects dishonest successful writer replies without committing pending movement', async () => {
+    const { start } = await setup()
+    const cases = ['extra-reward', 'other-witness', 'stale-revision',
+      'skipped-revision', 'altered-lineage', 'honest'] as const
+    for (const variant of cases) {
+      const runtime = createPublicV43ControllerRuntime(start,
+        async (revision, lineage, witness) => {
+          const returnedWitness = variant === 'other-witness'
+            ? { kind: 'checkpoint' as const } : witness
+          const progress = replayPublicV43Witness(start.head, returnedWitness)
+          expect(progress).not.toBeNull()
+          const head = { ...progress!, schemaVersion: PUBLIC_V43_SCHEMA,
+            saveRevision: revision + (variant === 'stale-revision' ? 0
+              : variant === 'skipped-revision' ? 2 : 1), witness: returnedWitness }
+          return { ok: true as const, value: {
+            lineage: variant === 'altered-lineage'
+              ? { ...lineage, seed: 'forged-seed' } : lineage,
+            head: variant === 'extra-reward' ? { ...head,
+              state: { ...head.state, player: { ...head.state.player,
+                coins: head.state.player.coins + 1 } } } : head } }
+        })
+      expect(runtime.advanceFrame(publicV14MovementIntents(
+        runtime.preview().state.player.yaw, [0, 1], 0.16), true).rejections).toEqual([])
+      const before = runtime.committed()
+      expect(runtime.status().pendingFrames).toBe(1)
+      if (variant === 'honest') {
+        expect(await runtime.save()).toMatchObject({ status: 'saved' })
+        expect(runtime.status().pendingFrames).toBe(0)
+        expect(runtime.committed().head.saveRevision).toBe(1)
+      } else {
+        expect(await runtime.save()).toMatchObject({ status: 'blocked',
+          reason: 'writer-mismatch' })
+        expect(runtime.status().gate).toBe('blocked')
+        expect(runtime.status().pendingFrames).toBe(1)
+        expect(runtime.committed()).toEqual(before)
+      }
+    }
+  }, 120_000)
+
+  it('returns a trapped player home through a checked V43 reply and continues', async () => {
+    const factory = new IDBFactory(), store = createAtomicV43Store(factory)
+    const v42Store = createAtomicV42Store(factory)
+    const fresh = createFreshPublicV42Root('wizard-realms')
+    const place = { x: 12, z: 4 }
+    const support = publicV17StarterSupportAt({ seed: 'wizard-realms',
+      profile: fresh.head.state.generationProfile,
+      route: fresh.head.state.greenway.routes.find(({ id }) =>
+        id === 'greenway_ladder') ?? null,
+      built: false, greenwayWorks: fresh.head.greenwayWorks }, place)
+    if (!support || support.kind !== 'ground') throw Error('Missing trapped-site floor')
+    const genesis = { ...fresh.lineage.genesis,
+      terrain: { ...fresh.head.terrain, columns: [{ gx: 3, gz: 1,
+        openDepth: 8, rewardDepth: 8, pitLadder: false }] },
+      state: { ...fresh.head.state, movementOwner: 'greenway' as const,
+        discoveryMask: encodeDiscoveredTileIds([...new Set([
+          ...decodeDiscoveredTileIds(fresh.head.state.discoveryMask), 'tile-6-4'])].sort()),
+        player: { ...fresh.head.state.player, verticalVelocity: 0,
+          position: { ...place, y: support.floorY } } } }
+    const source: PublicV42Root = { lineage: { origin: 'v41-migration',
+      rulesProfile: 'iron-hall-rewards/v1', seed: 'wizard-realms',
+      sourceRevision: 0, genesis }, previous: null,
+    head: { ...structuredClone(genesis), schemaVersion: PUBLIC_V42_SCHEMA,
+      saveRevision: 0, witness: null } }
+    const empty = await v42Store.readChecked()
+    if (empty.status !== 'missing') throw Error('Expected empty V42 source store')
+    expect(await v42Store.commit(empty.proof, source)).toBe('committed')
+    const started = await startPublicV43(locks, store, v42Store, 0)
+    if (!started.ok) throw Error(started.reason)
+    const runtime = createPublicV43ControllerRuntime(started.value,
+      (revision, lineage, witness) => commitPublicV43(locks, store, v42Store,
+        revision, lineage, witness),
+      (revision, lineage) => requestPublicV43ReturnHome(locks, store, v42Store,
+        revision, lineage))
+    expect(runtime.advanceFrame([{ type: 'look', yawDelta: 0.01,
+      pitchDelta: 0 }], false).rejections).toEqual([])
+    expect(runtime.status().pendingFrames).toBe(1)
+    const now = vi.spyOn(Date, 'now').mockReturnValue(10_000)
+    try {
+      expect(await runtime.returnHome()).toMatchObject({ status: 'saved' })
+    } finally { now.mockRestore() }
+    const savedRevision = runtime.committed().head.saveRevision
+    expect(runtime.status().pendingFrames).toBe(0)
+    expect(runtime.committed().head).toMatchObject({ saveRevision: savedRevision,
+      witness: { kind: 'return-home/v1', atMs: 10_000 },
+      state: { player: { position: { x: 0, z: 0 } } } })
+    const reopened = createAtomicV43Store(factory)
+    expect(await reopened.readChecked()).toMatchObject({ status: 'valid',
+      root: { head: { saveRevision: savedRevision,
+        witness: { kind: 'return-home/v1' } } } })
+    const resumed = await resumePublicV43(locks, reopened, v42Store, savedRevision,
+      started.value.lineage)
+    expect(resumed.ok).toBe(true)
+    if (!resumed.ok) throw Error(resumed.reason)
+    expect(resumed.value.head.state.player.position)
+      .toEqual(runtime.committed().head.state.player.position)
   }, 120_000)
 
   it('waits for a jump to land before committing its full frame batch', async () => {

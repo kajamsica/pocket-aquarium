@@ -209,6 +209,6 @@ const routedApp = <Suspense fallback={<main role="status">Loading game…</main>
     : publicWorld === 'v9' ? <PublicV9EntryApp />
     : publicWorld === 'v8' ? <PublicV8EntryApp />
     : publicWorld === '1' ? <PublicWizardApp /> : <App />}</Suspense>
-reactRoot.render(import.meta.env.DEV && workbenchId === null && !mireglassDev && !streamedPreview && publicWorld === 'v42'
+reactRoot.render(import.meta.env.DEV && workbenchId === null && !mireglassDev && !streamedPreview && (publicWorld === 'v42' || publicWorld === 'v43')
   ? routedApp
   : <StrictMode>{routedApp}</StrictMode>)
