@@ -200,8 +200,7 @@ function replayFrames(before: PublicV43FamiliarProgress,
       current = advanced
     }
   }
-  const next = { ...parent, familiar: current.familiar }
-  return decodePublicV43FamiliarProgress(next)
+  return { ...parent, familiar: current.familiar }
 }
 
 /** Intent-only replay. A care edge creates or extends the optional training overlay. */

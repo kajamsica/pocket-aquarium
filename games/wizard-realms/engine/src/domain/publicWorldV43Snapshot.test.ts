@@ -146,6 +146,41 @@ describe('V43 familiar checked save', () => {
       status: 'valid', root: { head: { saveRevision: 1 } } })
   })
 
+  it('reports only phase names and durations for a successful checked save', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, eligibleV42())
+    const started = await startPublicV43(locks as never, store, oldStore, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const samples: Array<{ phase: string; durationMs: number }> = []
+    const saved = await commitPublicV43(locks as never, store, oldStore,
+      started.value.head.saveRevision, started.value.lineage,
+      { kind: 'familiar-tracks/v1' }, (sample) => samples.push(sample))
+    expect(saved).toMatchObject({ ok: true, value: { head: { saveRevision: 1 } } })
+    expect(samples.map(({ phase }) => phase)).toEqual([
+      'succession', 'writer-replay', 'atomic-commit'])
+    expect(samples.every(({ durationMs }) => Number.isFinite(durationMs)
+      && durationMs >= 0)).toBe(true)
+    expect(samples.map((sample) => Object.keys(sample).sort())).toEqual([
+      ['durationMs', 'phase'], ['durationMs', 'phase'], ['durationMs', 'phase']])
+  })
+
+  it('ignores a throwing phase reporter without changing the checked save', async () => {
+    const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
+    const store = createAtomicV43Store(factory)
+    await putRaw(factory, PUBLIC_V42_DATABASE_NAME, eligibleV42())
+    const started = await startPublicV43(locks as never, store, oldStore, 0)
+    if (!started.ok) throw new Error(started.reason)
+    const reporter = vi.fn(() => { throw new Error('diagnostic failure') })
+    const saved = await commitPublicV43(locks as never, store, oldStore,
+      started.value.head.saveRevision, started.value.lineage,
+      { kind: 'familiar-tracks/v1' }, reporter)
+    expect(reporter).toHaveBeenCalledTimes(3)
+    expect(saved).toMatchObject({ ok: true, value: { head: { saveRevision: 1 } } })
+    expect((await store.readChecked())).toMatchObject({ status: 'valid',
+      root: { head: { saveRevision: 1 } } })
+  })
+
   it('uses a distinct promotion commit proof only once', async () => {
     const factory = new IDBFactory(), store = createAtomicV43Store(factory)
     await putRaw(factory, PUBLIC_V43_DATABASE_NAME, createFreshPublicV43Root(seed))

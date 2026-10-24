@@ -53,7 +53,7 @@ import { publicV42IronHallQuest, publicV42IronHallRejectionHint } from './view/p
 import { createPublicV43ControllerRuntime } from './PublicV43ControllerRuntime'
 import type { PublicV43EntryBindings } from './PublicV43Entry'
 import { commitPublicV43, requestPublicV43ReturnHome } from './domain/publicWorldV43Flow'
-import type { PublicV43Start } from './domain/publicWorldV43Flow'
+import type { PublicV43SavePhase, PublicV43Start } from './domain/publicWorldV43Flow'
 import type { PublicV43FamiliarWitness } from './domain/publicWorldV43FamiliarAction'
 import type { PublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
 import { GREENWAY_LOG_ORDER } from './domain/greenwayProcurementOrder'
@@ -1352,7 +1352,7 @@ export function publicV32HighlandObjective(view: WizardViewProjection,
   action: view.map.guidance || 'Follow the revealed eastern trail on walkable ground toward Highland Quarry.' }
 }
 
-/** Only V42's save path has phase ownership; V43 currently uses a different checked writer. */
+/** V42 has its own checked writer and save phase reporter. */
 export function publicV42SavePhaseReporter(version: string | undefined,
   trace: ReturnType<typeof createPublicV17InputTrace> | null | undefined) {
   return version === 'v42' && trace ? (sample: PublicV42SavePhase) => {
@@ -1415,7 +1415,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
           props.v43Store, revision, lineage))
       : 'version' in props && props.version === 'v43'
       ? createPublicV43ControllerRuntime(props.start, (revision, lineage, witness) =>
-        commitPublicV43(props.locks, props.store, props.v42Store, revision, lineage, witness),
+        commitPublicV43(props.locks, props.store, props.v42Store, revision, lineage, witness,
+          trace ? (sample: PublicV43SavePhase) => trace.record('controller.save.phase', sample)
+            : undefined),
         (revision, lineage) => requestPublicV43ReturnHome(props.locks, props.store,
           props.v42Store, revision, lineage))
       : 'version' in props && props.version === 'v42'
