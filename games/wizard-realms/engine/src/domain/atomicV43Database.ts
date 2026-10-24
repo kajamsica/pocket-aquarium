@@ -15,7 +15,7 @@ export type V43SuccessorMarker = Readonly<{ schemaVersion: typeof SUCCESSOR_SCHE
   sourceFingerprint: string }>
 export type AtomicV43PromotionRead = { status: 'missing' }
   | { status: 'valid'; root: PublicV43Root; marker: V43SuccessorMarker | null;
-    sourceFingerprint: string; proof: object }
+    sourceFingerprint: string; proof: object; commitProof: object }
   | { status: 'blocked'; reason: string }
 type PromotionPrior = { raw: unknown; markerRaw: unknown;
   marker: V43SuccessorMarker | null; root: PublicV43Root; fingerprint: string }
@@ -96,9 +96,12 @@ export function createAtomicV43Store(factory: IDBFactory,
         const proof = {}
         promotionProofs.set(proof, { raw: snapshot.raw, markerRaw: snapshot.markerRaw,
           marker, root, fingerprint })
-        return { status: 'valid', root: structuredClone(root),
-          marker: marker ? structuredClone(marker) : null,
-          sourceFingerprint: fingerprint, proof }
+        const clonedRoot = structuredClone(root)
+        const clonedMarker = marker ? structuredClone(marker) : null
+        const commitProof = {}
+        proofs.set(commitProof, { raw: snapshot.raw, root })
+        return { status: 'valid', root: clonedRoot, marker: clonedMarker,
+          sourceFingerprint: fingerprint, proof, commitProof }
       } catch { return { status: 'blocked', reason: 'storage-error' } }
       finally { db?.close() }
     },

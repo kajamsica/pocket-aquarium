@@ -1,5 +1,5 @@
 import type { createAtomicV42Store } from './atomicV42Database'
-import type { createAtomicV43Store } from './atomicV43Database'
+import type { AtomicV43Read, createAtomicV43Store } from './atomicV43Database'
 import { applyPublicV26ReturnHome } from './publicWorldV26Escape'
 import { samePublicV14Value } from './publicWorldV14Validation'
 import { PUBLIC_V7_LOCK_NAME } from './publicWorldV7'
@@ -32,6 +32,9 @@ export type PublicV43Operation<T> = { ok: true; value: T } | { ok: false; reason
 export type PublicV43Inspection = { status: 'migration-available' }
   | { status: 'valid'; start: PublicV43Start }
   | { status: 'blocked'; reason: string }
+export type PublicV43SavePhase = Readonly<{ phase: 'succession' | 'writer-replay'
+  | 'atomic-commit'; durationMs: number }>
+type PublicV43SaveTrace = (sample: PublicV43SavePhase) => void
 
 type Succession = { status: 'migration-available' }
   | { status: 'valid'; root: PublicV43Root; proof: object }
@@ -40,6 +43,13 @@ type Succession = { status: 'migration-available' }
 function sameLineage(raw: unknown, checked: PublicV43Root['lineage']): boolean {
   return sameStrictBoundedRaw(raw, checked, 3 << 20)
     || samePublicV14Value(decodePublicV43Lineage(raw), checked)
+}
+
+function reportPhase(trace: PublicV43SaveTrace | undefined,
+  phase: PublicV43SavePhase['phase'], startedAt: number) {
+  if (!trace) return
+  try { trace({ phase, durationMs: performance.now() - startedAt }) }
+  catch { /* Diagnostics must not affect checked writes. */ }
 }
 
 async function lock<T>(locks: PublicV7LockProvider | undefined,
@@ -51,7 +61,7 @@ async function lock<T>(locks: PublicV7LockProvider | undefined,
 
 /** Reconcile an interrupted handoff before exposing or writing any V43 state. */
 async function succession(store: Store, source: SourceStore, create: boolean,
-  expectedRevision?: number): Promise<Succession> {
+  expectedRevision?: number, reusePromotionCommitProof = false): Promise<Succession> {
   // A checked V44 reservation takes precedence over the V42 ancestor. An
   // immutable old V43 tab can still mark that ancestor as conflicted.
   const newer = await store.readForPromotion()
@@ -69,7 +79,11 @@ async function succession(store: Store, source: SourceStore, create: boolean,
   let expected: PublicV43Root
   try { expected = createPublicV43Root(structuredClone(old.root)) }
   catch { return { status: 'blocked', reason: 'invalid-source' } }
-  let target = await store.readChecked()
+  const reuse = reusePromotionCommitProof && newer.status === 'valid'
+    && newer.marker === null
+  let target: AtomicV43Read = reuse && newer.status === 'valid'
+    ? { status: 'valid', root: newer.root, proof: newer.commitProof }
+    : await store.readChecked()
   if (target.status === 'blocked' && target.reason === 'storage-error')
     return { status: 'blocked', reason: 'storage-error' }
   // A legacy V43 lineage does not retain the full V42 source fingerprint.
@@ -187,9 +201,12 @@ export function resumePublicV43(locks: PublicV7LockProvider | undefined,
 }
 
 async function commitWitnessUnderLock(store: Store, source: SourceStore, revision: number,
-  rawLineage: unknown, witnessFromWriter: () => unknown, returnHome: boolean):
+  rawLineage: unknown, witnessFromWriter: () => unknown, returnHome: boolean,
+  trace?: PublicV43SaveTrace):
   Promise<PublicV43Operation<PublicV43Start>> {
-  const fenced = await succession(store, source, false)
+  const successionStartedAt = trace ? performance.now() : 0
+  const fenced = await succession(store, source, false, undefined, true)
+  reportPhase(trace, 'succession', successionStartedAt)
   if (fenced.status !== 'valid') return { ok: false,
     reason: fenced.status === 'blocked' ? fenced.reason : 'target-missing' }
   const { head, lineage } = fenced.root
@@ -199,7 +216,9 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore, revisio
   const decoded = decodePublicV43Witness(witnessFromWriter())
   if (!decoded || (decoded.kind === 'return-home/v1') !== returnHome)
     return { ok: false, reason: 'invalid-witness' }
+  const replayStartedAt = trace ? performance.now() : 0
   const replayed = replayPublicV43Witness(head, decoded)
+  reportPhase(trace, 'writer-replay', replayStartedAt)
   if (!replayed) {
     if (decoded.kind === 'buy-greenway-backpack/v1') {
       const familiar = Object.fromEntries(PUBLIC_V43_PROGRESS_KEYS.map((key) =>
@@ -250,17 +269,19 @@ async function commitWitnessUnderLock(store: Store, source: SourceStore, revisio
   }
   const next: PublicV43Head = { ...replayed, schemaVersion: head.schemaVersion,
     saveRevision: revision + 1, witness: structuredClone(decoded) }
+  const commitStartedAt = trace ? performance.now() : 0
   const result = await store.commit(fenced.proof, { lineage, previous: head, head: next })
+  reportPhase(trace, 'atomic-commit', commitStartedAt)
   return result === 'committed' ? { ok: true, value: { head: next, lineage } }
     : { ok: false, reason: result }
 }
 
 export function commitPublicV43(locks: PublicV7LockProvider | undefined,
   store: Store, source: SourceStore, revision: number, rawLineage: unknown,
-  witness: PublicV43Witness):
+  witness: PublicV43Witness, trace?: PublicV43SaveTrace):
   Promise<PublicV43Operation<PublicV43Start>> {
   return lock(locks, () => commitWitnessUnderLock(store, source, revision,
-    rawLineage, () => witness, false))
+    rawLineage, () => witness, false, trace))
 }
 
 export function requestPublicV43ReturnHome(locks: PublicV7LockProvider | undefined,
