@@ -96,8 +96,19 @@ export function PublicV42EntryView({ entry, busyChoice, onChoose, onRetry, actio
     {entry.status === 'blocked' && <><p role="alert">V42 cannot open ({entry.reason}). No save
       was cleared or replaced. Do not restart over this branch.</p><button type="button" style={button}
       disabled={busy} onClick={onRetry}>Reload to recheck</button></>}
+    {!busy && !actionError && entry.status === 'blocked'
+      && entry.reason === 'invalid-v42-root' && <p>If you moved this adventure to V43,
+      <a href="?publicWorld=v43" style={{ color: '#d8edbb' }}> open its checked V43 entry</a>.
+      This V42 error alone does not confirm a move; V43 checks its own save before Continue.</p>}
     {actionError && <p role="alert">The action did not complete ({actionError}). Neither
       branch was reset. Reload to recheck before retrying.</p>}
+    {!busy && !actionError && entry.status === 'resume' && <p><a href="?publicWorld=v43"
+      style={{ color: '#d8edbb' }}>Explore the expanded V43 adventure</a>. V43 will ask before
+      moving your checked V42 save. If you choose Move, V42 is fenced and cannot be played
+      independently; there is no parallel rollback branch.</p>}
+    {!busy && !actionError && entry.status === 'fresh-available' && <p><a href="?publicWorld=v43"
+      style={{ color: '#d8edbb' }}>Explore the expanded V43 adventure</a>. Without a V42 save,
+      you can start an independent V43 adventure there.</p>}
   <p><a href="?publicWorld=v41" style={{ color: '#d8edbb' }}>Open untouched V41 adventure</a></p>
   </section></main>
 }

@@ -55,7 +55,7 @@ import type { PublicV43EntryBindings } from './PublicV43Entry'
 import { commitPublicV43, requestPublicV43ReturnHome } from './domain/publicWorldV43Flow'
 import type { PublicV43Start } from './domain/publicWorldV43Flow'
 import type { PublicV43FamiliarWitness } from './domain/publicWorldV43FamiliarAction'
-import type { PublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
+import { SEDGEHORN_CARES_TO_MATURE, type PublicV43MountTrainingWitness } from './domain/publicWorldV43MountTraining'
 import { GREENWAY_LOG_ORDER } from './domain/greenwayProcurementOrder'
 import type { PublicV43LogOrderWitness } from './domain/publicWorldV43LogOrder'
 import { GREENWAY_BAG_UPGRADE } from './domain/publicWorldV43BagUpgrade'
@@ -2722,6 +2722,13 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         && stack.quantity > 0), v32NorthLadderBuilt) : null
   const queuedChecked = inputQueue.current.some((token) => token.kind === 'checked')
   const queuedPulses = inputQueue.current.filter((token) => token.kind === 'pulse').length
+  const handoffIdle = status.gate === 'open' && status.pendingFrames === 0
+    && !busy.current && !saveTask.current && !actionTask.current
+    && !queuedChecked && queuedPulses === 0
+  const v42HandoffReady = 'version' in props && props.version === 'v42' && handoffIdle
+  const v43Mature = 'version' in props && props.version === 'v43'
+    && (snapshot as PublicV43Progress).mountTraining?.careWitnesses.length === SEDGEHORN_CARES_TO_MATURE
+  const v43HandoffReady = v43Mature && handoffIdle
   const greenwayOrderLogs = v43 ? view.backpack.stacks.filter((stack) =>
     stack.itemId === GREENWAY_LOG_ORDER.itemId).reduce((sum, stack) => sum + stack.quantity, 0) : 0
   const greenwayOrderClaimed = v43
@@ -2851,6 +2858,22 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       <p>{mounted ? 'Dismount to use ground tools or the current rescue action. ' : ''}
         The checked rescue works only when every exit is blocked.
         Successful rescue starts a 30-minute cooldown.</p>
+      {'version' in props && props.version === 'v42' && (v42HandoffReady
+        ? <p><a href="?publicWorld=v43" style={{ color: '#d8edbb' }}
+          onClick={(event) => {
+            if (runtime.status().gate !== 'open' || runtime.status().pendingFrames !== 0
+              || busy.current || saveTask.current || actionTask.current
+              || inputQueue.current.length !== 0) {
+              event.preventDefault()
+              tell('Save now and finish queued actions before opening the expanded adventure.')
+            }
+          }}>Expanded adventure (V43)</a>. V43 asks before moving this checked V42 save.
+          Choosing Move there fences the V42 source; it cannot be played independently afterward.</p>
+        : <p>{status.gate === 'blocked'
+          ? 'Save blocked. Keep this tab open; do not move to V43.'
+          : status.pendingFrames > 0
+            ? 'Use Save now, then finish queued actions before opening the expanded adventure.'
+            : 'Finish the current save or queued action before opening the expanded adventure.'}</p>)}
     </details>}
     {regional && !mounted && <section className="v23-aim" aria-label="West cliff ladder aim">
       {marker ? <><label htmlFor="v23-west-aim">West cliff ladder, {preview?.site
@@ -2916,7 +2939,9 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
       </section></> : undefined} />
     {v43 && <details className="v43-familiar" open={familiarOpen}
       onToggle={(event) => setFamiliarOpen(event.currentTarget.open)}>
-      <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {journalLeadTitle ? `Next: ${journalLeadTitle}` : 'Route recorded'}</span>
+      <summary><span>{v44 ? 'Quest Journal · Sedgehorn mount' : 'Quest Journal'} · {v43Mature
+        ? 'Next chapter: Ride the adult Sedgehorn in V44'
+        : journalLeadTitle ? `Next: ${journalLeadTitle}` : 'Route recorded'}</span>
         <small>{v44 && adult?.visible
           ? adult.mode === 'riding' ? 'Riding the adult Sedgehorn. Open to dismount.'
             : `Adult Sedgehorn ready, ${Math.ceil(adultDistance ?? 0)} m away. Open to mount.`
@@ -2936,6 +2961,28 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             ? 'sedgehorn-dismount/v1' : 'sedgehorn-mount/v1' })}>
           {adult.mode === 'riding' ? 'Dismount Sedgehorn' : 'Mount Sedgehorn'}
         </button>}
+      </section>}{v43Mature && <section aria-label="Next chapter" style={{ background: '#314532',
+        padding: 12, borderRadius: 8 }}>
+        <h3>Next chapter: Sedgehorn riding</h3>
+        {v43HandoffReady ? <p><a href="?publicWorld=v44" style={{ color: '#e7f3b9' }}
+          onClick={(event) => {
+            if (!('version' in props) || props.version !== 'v43'
+              || (runtime.preview() as PublicV43Progress).mountTraining?.careWitnesses.length
+                !== SEDGEHORN_CARES_TO_MATURE
+              || runtime.status().gate !== 'open' || runtime.status().pendingFrames !== 0
+              || busy.current || saveTask.current || actionTask.current
+              || inputQueue.current.length !== 0) {
+              event.preventDefault()
+              tell('Save now and finish queued actions before opening the riding chapter.')
+            }
+          }}>Ride the adult Sedgehorn in V44</a>. V44 asks before moving your checked V43 save.
+          If you choose Move, V43 becomes fenced and cannot be played independently. There is no
+          parallel rollback.</p>
+          : <p role="status">{status.gate === 'blocked'
+            ? 'Save blocked. Keep this tab open; do not move to V44.'
+            : status.pendingFrames > 0
+              ? 'Use Save now, then finish queued actions before opening the riding chapter.'
+              : 'Finish the current save or queued action before opening the riding chapter.'}</p>}
       </section>}<PublicV43StarterChapter head={snapshot as PublicV43Progress} />
         <PublicV43QuestJournal {...questLeads!} rideableAfterMaturity={v44} />
         <PublicV43FamiliarQuestPanel

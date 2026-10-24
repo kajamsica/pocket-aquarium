@@ -508,6 +508,7 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
     expect(html).toContain('Copy V41 adventure into V42')
     expect(html).toContain('New Game')
     expect(html).toContain('href="?publicWorld=v41"')
+    expect(html).not.toContain('href="?publicWorld=v43"')
     expect(renderToStaticMarkup(createElement(PublicV41EntryView, {
       entry: { status: 'fresh-available', sourceWarning: null }, busyChoice: null,
       onChoose: vi.fn(), onRetry: vi.fn(), actionError: null })))
@@ -521,9 +522,41 @@ describe('V42 controller, Iron Hall view and entry integration', () => {
     expect(await choosePublicV42Entry(resume, 'resume', bindings)).toEqual(copied)
     expect(await choosePublicV42Entry(resume, 'create', bindings))
       .toEqual({ ok: false, reason: 'choice-unavailable' })
+    const resumeHtml = renderToStaticMarkup(createElement(PublicV42EntryView, { entry: resume,
+      busyChoice: null, onChoose: vi.fn(), onRetry: vi.fn(), actionError: null }))
+    expect(resumeHtml).toContain('Continue V42 adventure')
+    expect(resumeHtml.match(/href="\?publicWorld=v43"/g)).toHaveLength(1)
+    expect(resumeHtml).toContain('V43 will ask before')
+    expect(resumeHtml).toContain('V42 is fenced')
+    expect(resumeHtml).toContain('no parallel rollback branch')
+    const freshHtml = renderToStaticMarkup(createElement(PublicV42EntryView, {
+      entry: { status: 'fresh-available', sourceWarning: null }, busyChoice: null,
+      onChoose: vi.fn(), onRetry: vi.fn(), actionError: null }))
+    expect(freshHtml.match(/href="\?publicWorld=v43"/g)).toHaveLength(1)
+    expect(freshHtml).toContain('start an independent V43 adventure')
+    for (const entry of [{ status: 'checking' as const },
+      { status: 'blocked' as const, reason: 'storage-error' }]) {
+      expect(renderToStaticMarkup(createElement(PublicV42EntryView, { entry, busyChoice: null,
+        onChoose: vi.fn(), onRetry: vi.fn(), actionError: null })))
+        .not.toContain('href="?publicWorld=v43"')
+    }
+    const blockedAfterMove = { status: 'blocked' as const, reason: 'invalid-v42-root' }
+    const blockedHtml = renderToStaticMarkup(createElement(PublicV42EntryView, {
+      entry: blockedAfterMove, busyChoice: null, onChoose: vi.fn(), onRetry: vi.fn(),
+      actionError: null }))
+    expect(blockedHtml.match(/href="\?publicWorld=v43"/g)).toHaveLength(1)
+    expect(blockedHtml).toContain('If you moved this adventure to V43')
+    expect(blockedHtml).toContain('error alone does not confirm a move')
+    for (const [busyChoice, actionError] of [['resume', null], [null, 'storage-error']] as const)
+      expect(renderToStaticMarkup(createElement(PublicV42EntryView, { entry: blockedAfterMove,
+        busyChoice, onChoose: vi.fn(), onRetry: vi.fn(), actionError })))
+        .not.toContain('href="?publicWorld=v43"')
     expect(renderToStaticMarkup(createElement(PublicV42EntryView, { entry: resume,
-      busyChoice: null, onChoose: vi.fn(), onRetry: vi.fn(), actionError: null })))
-      .toContain('Continue V42 adventure')
+      busyChoice: 'resume', onChoose: vi.fn(), onRetry: vi.fn(), actionError: null })))
+      .not.toContain('href="?publicWorld=v43"')
+    expect(renderToStaticMarkup(createElement(PublicV42EntryView, { entry: resume,
+      busyChoice: null, onChoose: vi.fn(), onRetry: vi.fn(), actionError: 'storage-error' })))
+      .not.toContain('href="?publicWorld=v43"')
     const fresh = await choosePublicV42Entry(decision, 'create', { ...bindings,
       store: createAtomicV42Store(new IDBFactory()) })
     expect(fresh).toMatchObject({ ok: true, value: { lineage: { origin: 'fresh' } } })

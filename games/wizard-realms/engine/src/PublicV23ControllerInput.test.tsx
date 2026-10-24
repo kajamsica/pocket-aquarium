@@ -16,6 +16,7 @@ import { createAtomicV28Store } from './domain/atomicV28Database'
 import { createAtomicV29Store } from './domain/atomicV29Database'
 import { createAtomicV30Store } from './domain/atomicV30Database'
 import { createAtomicV31Store } from './domain/atomicV31Database'
+import { createAtomicV41Store } from './domain/atomicV41Database'
 import { createAtomicV42Store } from './domain/atomicV42Database'
 import { createAtomicV43Store } from './domain/atomicV43Database'
 import { decodeDiscoveredTileIds, encodeDiscoveredTileIds } from './domain/discoveryMask'
@@ -31,6 +32,7 @@ import { createPublicV28Root } from './domain/publicWorldV28Snapshot'
 import { createPublicV29Root } from './domain/publicWorldV29Snapshot'
 import { createPublicV30Root } from './domain/publicWorldV30Snapshot'
 import { createPublicV31Root } from './domain/publicWorldV31Snapshot'
+import { createFreshPublicV42Root } from './domain/publicWorldV42Snapshot'
 import { createFreshPublicV43Root } from './domain/publicWorldV43Snapshot'
 import type { PublicV17ActiveView } from './PublicV17WorldView'
 import { resolvePublicV23Site } from './domain/publicWorldV23Sites'
@@ -253,6 +255,21 @@ vi.mock('./PublicV43ControllerRuntime', async (importOriginal) => {
         } }
     } }
 })
+vi.mock('./PublicV42ControllerRuntime', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./PublicV42ControllerRuntime')>()
+  return { ...actual, createPublicV42ControllerRuntime:
+    (...args: Parameters<typeof actual.createPublicV42ControllerRuntime>) => {
+      const base = actual.createPublicV42ControllerRuntime(...args)
+      return !probe.enabled ? base : { ...base,
+        status: () => ({ ...base.status(), gate: probe.gate, pendingFrames: probe.pending,
+          ...(probe.gate === 'blocked' ? { blockedReason: 'test-blocked' } : {}) }),
+        save: () => new Promise((resolve) => {
+          probe.saveCalls++; probe.gate = 'checkpointing'
+          probe.releaseSave = () => { probe.gate = 'open'; probe.pending = 0
+            resolve({ status: 'saved', events: [], resetWalkRequested: false }) }
+        }) }
+    } }
+})
 
 const seed = 'greenway-alpha'
 const lock = { request: async <T,>(_name: string,
@@ -370,6 +387,20 @@ function mountV43(start: NonNullable<typeof preparedV43Start>) {
   return renderToStaticMarkup(createElement(PublicV23Controller, {
     version: 'v43', start, locks: lock,
     store: createAtomicV43Store(factory), v42Store: createAtomicV42Store(factory) }))
+}
+function renderV42(reuse = false) {
+  probe.enabled = true; probe.reuse = reuse; probe.cursor = probe.stateCursor = 0
+  if (!reuse) {
+    vi.stubGlobal('window', { location: { hostname: 'localhost', search: '?publicWorld=v42' },
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+      setInterval: (tick: () => void) => { probe.tick = tick; return 1 }, clearInterval: () => {} })
+    vi.stubGlobal('document', { hidden: false,
+      addEventListener: vi.fn(), removeEventListener: vi.fn() })
+  }
+  const factory = new IDBFactory(), root = createFreshPublicV42Root('wizard-realms')
+  return renderToStaticMarkup(createElement(PublicV23Controller, { version: 'v42',
+    start: root, locks: lock, store: createAtomicV42Store(factory),
+    v41Store: createAtomicV41Store(factory) }))
 }
 function mount(trace = false, v24 = false, v25 = false, v26 = false) {
   probe.enabled = true; probe.cursor = probe.stateCursor = 0
@@ -1950,12 +1981,36 @@ describe('V31 controller soil intent routing', () => {
   })
 })
 
+describe('V42 expanded-adventure handoff', () => {
+  it('links only from an idle checked session, not during pending, blocked, queued, or saving work', async () => {
+    const ready = renderV42()
+    expect(ready).toContain('href="?publicWorld=v43"')
+    expect(ready).toContain('Choosing Move there fences the V42 source')
+    probe.pending = 1
+    expect(renderV42(true)).not.toContain('href="?publicWorld=v43"')
+    expect(renderV42(true)).toContain('Use Save now')
+    probe.pending = 0; probe.gate = 'blocked'
+    expect(renderV42(true)).not.toContain('href="?publicWorld=v43"')
+    expect(renderV42(true)).toContain('Save blocked. Keep this tab open')
+    probe.gate = 'open'
+    probe.onIntent!({ type: 'movement.tap', vector: [0, 1], source: 'keyboard' })
+    expect(renderV42(true)).not.toContain('href="?publicWorld=v43"')
+    probe.onIntent!({ type: 'movement', vector: [0, 0] })
+    probe.pending = 1; Object.assign(document, { hidden: true }); visibilityChange()()
+    probe.pending = 0
+    expect(renderV42(true)).not.toContain('href="?publicWorld=v43"')
+    probe.releaseSave!(); await settle()
+    expect(renderV42(true)).toContain('href="?publicWorld=v43"')
+  })
+})
+
 describe('V43 River Works E interaction', () => {
   beforeAll(prepareV43Start, 30000)
 
   it('claims the real projected ready post with E on the current V43 route', async () => {
     const html = mountV43(preparedBridgeheadV43Start!)
     expect(html).toContain('data-public-version="v43"')
+    expect(html).not.toContain('href="?publicWorld=v43"')
     expect(probe.projection?.v30Bridgehead).toMatchObject({ bridgeId: workId,
       claimReady: true, reward: 'basic-pick' })
     probe.onIntent!({ type: 'interact' })
