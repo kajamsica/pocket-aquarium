@@ -1,5 +1,5 @@
 import type { createAtomicV42Store } from './atomicV42Database'
-import type { createAtomicV43Store } from './atomicV43Database'
+import type { AtomicV43Read, createAtomicV43Store } from './atomicV43Database'
 import { applyPublicV26ReturnHome } from './publicWorldV26Escape'
 import { samePublicV14Value } from './publicWorldV14Validation'
 import { PUBLIC_V7_LOCK_NAME } from './publicWorldV7'
@@ -51,7 +51,7 @@ async function lock<T>(locks: PublicV7LockProvider | undefined,
 
 /** Reconcile an interrupted handoff before exposing or writing any V43 state. */
 async function succession(store: Store, source: SourceStore, create: boolean,
-  expectedRevision?: number): Promise<Succession> {
+  expectedRevision?: number, reusePromotionCommitProof = false): Promise<Succession> {
   // A checked V44 reservation takes precedence over the V42 ancestor. An
   // immutable old V43 tab can still mark that ancestor as conflicted.
   const newer = await store.readForPromotion()
@@ -69,7 +69,11 @@ async function succession(store: Store, source: SourceStore, create: boolean,
   let expected: PublicV43Root
   try { expected = createPublicV43Root(structuredClone(old.root)) }
   catch { return { status: 'blocked', reason: 'invalid-source' } }
-  let target = await store.readChecked()
+  const reuse = reusePromotionCommitProof && newer.status === 'valid'
+    && newer.marker === null
+  let target: AtomicV43Read = reuse && newer.status === 'valid'
+    ? { status: 'valid', root: newer.root, proof: newer.commitProof }
+    : await store.readChecked()
   if (target.status === 'blocked' && target.reason === 'storage-error')
     return { status: 'blocked', reason: 'storage-error' }
   // A legacy V43 lineage does not retain the full V42 source fingerprint.
@@ -189,7 +193,7 @@ export function resumePublicV43(locks: PublicV7LockProvider | undefined,
 async function commitWitnessUnderLock(store: Store, source: SourceStore, revision: number,
   rawLineage: unknown, witnessFromWriter: () => unknown, returnHome: boolean):
   Promise<PublicV43Operation<PublicV43Start>> {
-  const fenced = await succession(store, source, false)
+  const fenced = await succession(store, source, false, undefined, true)
   if (fenced.status !== 'valid') return { ok: false,
     reason: fenced.status === 'blocked' ? fenced.reason : 'target-missing' }
   const { head, lineage } = fenced.root

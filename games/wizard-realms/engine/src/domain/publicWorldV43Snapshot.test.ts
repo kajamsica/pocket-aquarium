@@ -130,7 +130,7 @@ function next43(root: PublicV43Root, witness: PublicV43Witness): PublicV43Root {
 }
 
 describe('V43 familiar checked save', () => {
-  it('reuses the checked succession proof for one save', async () => {
+  it('reuses a valid unmarked promotion root for one checked save', async () => {
     const factory = new IDBFactory(), oldStore = createAtomicV42Store(factory)
     const store = createAtomicV43Store(factory)
     await putRaw(factory, PUBLIC_V42_DATABASE_NAME, eligibleV42())
@@ -141,9 +141,21 @@ describe('V43 familiar checked save', () => {
       started.value.head.saveRevision, started.value.lineage,
       { kind: 'familiar-tracks/v1' })
     expect(saved).toMatchObject({ ok: true, value: { head: { saveRevision: 1 } } })
-    expect(checkedReads).toHaveBeenCalledTimes(1)
+    expect(checkedReads).not.toHaveBeenCalled()
     expect((await createAtomicV43Store(factory).readChecked())).toMatchObject({
       status: 'valid', root: { head: { saveRevision: 1 } } })
+  })
+
+  it('uses a distinct promotion commit proof only once', async () => {
+    const factory = new IDBFactory(), store = createAtomicV43Store(factory)
+    await putRaw(factory, PUBLIC_V43_DATABASE_NAME, createFreshPublicV43Root(seed))
+    const promoted = await store.readForPromotion()
+    if (promoted.status !== 'valid') throw new Error('Expected valid V43 promotion')
+    expect(promoted.commitProof).not.toBe(promoted.proof)
+    const next = next43(promoted.root, idle)
+    expect(await store.commit(promoted.commitProof, next)).toBe('committed')
+    expect(await store.commit(promoted.commitProof, next)).toBe('invalid')
+    expect(await store.commit(promoted.proof, next)).toBe('invalid')
   })
 
   it('rejects a competing root change after the reused proof', async () => {
@@ -153,14 +165,15 @@ describe('V43 familiar checked save', () => {
     const started = await startPublicV43(locks as never, store, oldStore, 0)
     if (!started.ok) throw new Error(started.reason)
     const readChecked = store.readChecked.bind(store)
+    const commit = store.commit.bind(store)
     let competitor: PublicV43Root | null = null
-    const racingStore = { ...store, async readChecked() {
+    const racingStore = { ...store, async commit(proof: object, next: PublicV43Root) {
       const read = await readChecked()
       if (read.status === 'valid' && !competitor) {
         competitor = next43(read.root, { kind: 'familiar-tracks/v1' })
         await putRaw(factory, PUBLIC_V43_DATABASE_NAME, competitor)
       }
-      return read
+      return commit(proof, next)
     } }
     expect(await commitPublicV43(locks as never, racingStore, oldStore,
       started.value.head.saveRevision, started.value.lineage,

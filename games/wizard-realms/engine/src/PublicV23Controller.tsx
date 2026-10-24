@@ -247,6 +247,7 @@ type InputToken = { kind: 'pulse'; vector: readonly [number, number]; jump: bool
   queuedAtMs: number; heldInput?: boolean; saveBuffered?: boolean }
   | { kind: 'checked'; intent: CheckedIntent }
 const STEP_MS = 50
+const V43_IDLE_SAVE_GRACE_MS = 600
 const MOVE_RESERVE_AT = 96
 const MAX_PULSES = 16
 function pageTraceState() {
@@ -2128,6 +2129,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
   }
   useEffect(() => {
     let lastTickAtMs = performance.now()
+    let idleSinceMs: number | null = null
     let longTaskObserver: PerformanceObserver | null = null
     let observing = true
     if (trace && typeof PerformanceObserver !== 'undefined'
@@ -2170,6 +2172,7 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         obstacleCueUntil.current = 0; setObstacleCue(null)
       }
       if (busy.current) {
+        idleSinceMs = null
         if (timedHeld.current) { sampleTimedUntil(performance.now()); return }
         // Keep only sampled, bounded input while the checked writer owns the world.
         const vector = held.current, edge = edgePulse.current
@@ -2198,8 +2201,8 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
         return
       }
       if (v44 && runtime.status().gate === 'cap-paused'
-        && runtime.status().pendingFrames > 0) { void save(); return }
-      if (running.current || runtime.status().gate !== 'open') return
+        && runtime.status().pendingFrames > 0) { idleSinceMs = null; void save(); return }
+      if (running.current || runtime.status().gate !== 'open') { idleSinceMs = null; return }
       running.current = true
       let advanced = false
       try {
@@ -2212,13 +2215,27 @@ export function PublicV23Controller(props: PublicV23ControllerProps | PublicV24C
             if (next?.kind !== 'pulse' || tickAtMs - next.queuedAtMs < index * STEP_MS) break
           }
         if (timedHeld.current) sampleTimedUntil(performance.now())
-        if (inputQueue.current[0]?.kind === 'checked') { drainChecked(); return }
+        if (inputQueue.current[0]?.kind === 'checked') { idleSinceMs = null; drainChecked(); return }
         if (!devRoute.current && !timedHeld.current
           && (!held.current.some(Boolean) || matchesBlockedHeld(held.current)) && !edgePulse.current
           && inputQueue.current.length === 0 && !runtime.idleFrameNeeded()) {
-          if (runtime.status().pendingFrames === 0) return
-          if (readActive().player.verticalVelocity === 0) { void save(); return }
+          const pendingFrames = runtime.status().pendingFrames
+          if (pendingFrames === 0) { idleSinceMs = null; return }
+          if (readActive().player.verticalVelocity === 0) {
+            const atCapacity = pendingFrames >= (v44
+              && (runtime as V44Runtime).groundMount().mode === 'riding'
+              ? PUBLIC_V44_MAX_RIDE_BATCH : MOVE_RESERVE_AT)
+            if (!v43 || atCapacity) { idleSinceMs = null; void save(); return }
+            if (held.current.some(Boolean)) { idleSinceMs = null; return }
+            if (idleSinceMs === null) idleSinceMs = tickAtMs
+            if (tickAtMs - idleSinceMs >= V43_IDLE_SAVE_GRACE_MS) {
+              idleSinceMs = null
+              void save()
+            }
+            return
+          }
         }
+        idleSinceMs = null
         const before = readActive()
         const riding = v44 && (runtime as V44Runtime).groundMount().mode === 'riding'
         const reserveAt = riding ? PUBLIC_V44_MAX_RIDE_BATCH : MOVE_RESERVE_AT

@@ -43,7 +43,7 @@ const probe = vi.hoisted(() => ({ enabled: false, reuse: false, cursor: 0,
   now: 0,
   stateCursor: 0, states: [] as unknown[], streamed: false, known: false, airborne: false,
   westPose: false, bootsEquipped: false,
-  v43Blocked: false,
+  v43Blocked: false, v43SaveProbe: false,
   greenwayOak: false, actionEvents: [] as Array<{ type: string }>,
   suggested: false,
   poseOnJump: false, poseOnMove: false,
@@ -246,7 +246,24 @@ vi.mock('./PublicV43ControllerRuntime', async (importOriginal) => {
       const base = actual.createPublicV43ControllerRuntime(...args)
       return !probe.enabled ? base : { ...base,
         status: () => probe.v43Blocked ? { ...base.status(), gate: 'blocked' as const,
-          blockedReason: 'test-blocked' } : base.status(),
+          blockedReason: 'test-blocked' } : probe.v43SaveProbe
+          ? { ...base.status(), gate: probe.gate, pendingFrames: probe.pending }
+          : base.status(),
+        ...(probe.v43SaveProbe ? {
+          idleFrameNeeded: () => probe.idleNeeded,
+          advanceFrame: (intents: Parameters<typeof base.advanceFrame>[0]) => {
+            probe.frames.push(intents)
+            if (probe.countFrames) probe.pending++
+            return { events: [], rejections: [] }
+          },
+          save: () => new Promise((resolve) => {
+            probe.saveCalls++; probe.gate = 'checkpointing'
+            probe.releaseSave = () => {
+              probe.gate = 'open'; probe.pending = 0
+              resolve({ status: 'saved', events: [], resetWalkRequested: false })
+            }
+          }),
+        } : {}),
         action: async (witness: Parameters<typeof base.action>[0]) => {
           probe.actions.push(witness)
           return { status: 'saved' as const, events: [], resetWalkRequested: false }
@@ -405,7 +422,7 @@ const savePanel = (html: string) => html.match(/<div class="v23-save">([\s\S]*?)
 async function settle() { for (let i = 0; i < 8; i++) await Promise.resolve() }
 afterEach(() => { probe.enabled = probe.reuse = probe.streamed = probe.known = probe.airborne = false
   probe.westPose = false; probe.bootsEquipped = false; probe.greenwayOak = false
-  probe.v43Blocked = false
+  probe.v43Blocked = probe.v43SaveProbe = false
   probe.actionEvents = []
   probe.now = 0
   probe.suggested = false
@@ -1996,5 +2013,47 @@ describe('V43 River Works E interaction', () => {
     expect(probe.projection?.controllerActionsEnabled).toBe(false)
     probe.onIntent!({ type: 'interact' })
     expect(probe.actions).toEqual([])
+  })
+})
+
+describe('V43 grounded idle save grace', () => {
+  beforeAll(prepareV43Start, 30000)
+
+  it('waits 600 ms of quiet after the latest turn before one checked save', async () => {
+    probe.v43SaveProbe = true; probe.idleNeeded = false; probe.countFrames = true
+    mountV43(preparedV43Start!)
+    probe.onIntent!({ type: 'movement.tap', vector: [1, 0], source: 'keyboard' })
+    probe.now = 50; probe.tick!()
+    expect(probe.frames).toHaveLength(1)
+    expect(probe.pending).toBe(1)
+    probe.now = 100; probe.tick!()
+    probe.now = 450
+    probe.onIntent!({ type: 'movement.tap', vector: [-1, 0], source: 'keyboard' })
+    probe.tick!()
+    expect(probe.frames).toHaveLength(2)
+    probe.now = 500; probe.tick!()
+    probe.now = 699; probe.tick!()
+    probe.now = 1099; probe.tick!()
+    expect(probe.saveCalls).toBe(0)
+    probe.now = 1100; probe.tick!()
+    expect(probe.saveCalls).toBe(1)
+    probe.releaseSave!(); await settle()
+    probe.now = 1150; probe.tick!()
+    expect(probe.saveCalls).toBe(1)
+    expect(probe.pending).toBe(0)
+  })
+
+  it('saves immediately at the 96-frame capacity checkpoint', () => {
+    probe.v43SaveProbe = true; probe.idleNeeded = false; probe.pending = 96
+    mountV43(preparedV43Start!)
+    probe.tick!()
+    expect(probe.saveCalls).toBe(1)
+  })
+
+  it('saves pending V43 travel immediately when the tab becomes hidden', () => {
+    probe.v43SaveProbe = true; probe.idleNeeded = false; probe.pending = 1
+    mountV43(preparedV43Start!)
+    Object.assign(document, { hidden: true }); visibilityChange()()
+    expect(probe.saveCalls).toBe(1)
   })
 })
